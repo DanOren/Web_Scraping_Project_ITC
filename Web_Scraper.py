@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import random as rand
-import csv
 import re
 
 MAIN_WEB_PAGE = 'https://www.metacritic.com'
@@ -36,6 +35,7 @@ def pages_urls(input_url):
     # csv_file = open('end_page_scrape.csv', 'w')
     # csv_writer = csv.writer(csv_file)
     # csv_writer.writerow([])
+
 
 def search_pages_urls(input_url):
     """
@@ -96,7 +96,9 @@ def page_data_scraper(input_url):
     studio_expression = re.compile('/company')  # expression to find the studio
     for studio in soup.find_all('a', href=studio_expression, limit=1):
         item_info['Studio'] = studio.text
-    for director in soup.find_all('div',class_='director', limit=1):
+    # dir_expression = re.compile('/person')
+    for director in soup.find_all('div', class_='director', limit=1):
+        something = director.find('a', href=True)
         item_info['Director'] = list(list(director.children)[3].children)[0].text
     for rating in soup.find_all('div', class_='rating', limit=1):
         item_info['Rating'] = list(rating.children)[3].text.strip()
@@ -105,6 +107,7 @@ def page_data_scraper(input_url):
     for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
         item_info['Summary'] = list(list(summary.children)[3].children)[1].text
 
+    print(item_info)
     return item_info
 
 
@@ -124,12 +127,10 @@ def build_database_dict(database_container, input_container):
     return database_container
 
 
-
-
 def main():
     # print(search_pages_urls(example_web_page))
     page_data_scraper(movie_example_page)
 
+
 if __name__ == '__main__':
     main()
-
