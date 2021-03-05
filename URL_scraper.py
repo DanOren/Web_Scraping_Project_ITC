@@ -90,9 +90,9 @@ class Scrapper:
         :return:
         """
         for index, url in enumerate(self.url_list):
-            self.movie_data_scraper(url)
+            self.debug_data_scraper(url)
 
-    def movie_data_scraper(self, input_url):  # TODO: this is for tests on on other types of web scrapers
+    def debug_data_scraper(self, input_url):  # TODO: this is for tests on on other types of web scrapers
         """
         For each url extracted by search_pages_url, this method extracts film name and director.
         works on 1 url at a time
