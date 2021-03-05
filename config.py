@@ -1,6 +1,6 @@
 MAIN_WEB_PAGE = 'https://www.metacritic.com'
 # Anchor page and subset of items used
-EXAMPLE_WEB_PAGE = 'https://www.metacritic.com/browse/movies/score/metascore/year' \
+EXAMPLE_WEB_PAGE_MOVIE = 'https://www.metacritic.com/browse/movies/score/metascore/year' \
                    '/filtered?year_selected=2017&sort=desc&view=detailed'
 EXAMPLE_WEB_PAGE_GAMES = 'https://www.metacritic.com/browse/games/score/metascore/year' \
                          '/all/filtered?year_selected=2020&distribution=&sort=desc&view=detailed'

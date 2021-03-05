@@ -70,10 +70,14 @@ class Scrapper:
                 sys.exit(1)
             soup = BeautifulSoup(source, 'lxml')
             # Loops through each item on the index page and extracts the url of the item into a list.
+            list_of_names = []  # this is mostly for games due to multi-platforms.
             try:
                 for article in soup.find_all('a', class_='title', href=True):
                     # Every url extracted is relative - without the main page
-                    self.url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
+                    if article.text not in list_of_names:
+                        self.url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
+                        list_of_names.append(article.text)
+
 
             except IOError:
                 logging.critical(f'unable to create url list to scrape')
@@ -109,26 +113,31 @@ class Scrapper:
             for title in soup.find_all('h1'):
                 item_info['Title'] = title.text
             # TODO:the year loop need to fix to take only second element
-            for release_year in soup.find('span', class_='release_date').find_all('span'):
+            for release_year in soup.find('li', class_='summary_detail release_data').find_all('span', class_='data'):
                 item_info['Release Year'] = release_year.text
-            studio_expression = re.compile('/company')  # expression to find the studio
-            for studio in soup.find_all('a', href=studio_expression, limit=1):
+            for studio in soup.find('li', class_='summary_detail developer').find_all('a', class_='button'):
                 item_info['Studio'] = studio.text
             # TODO: Need to check multiple creators
-            for creator in soup.find_all('div', class_='creator', limit=1):
-                item_info['Creator'] = list(list(creator.children)[3].children)[0].text
+            platform_list = []
+            for platform in soup.find('span', class_='platform').find_all('a'):
+                platform_list.append(platform.text.strip())
+            for other_platform in soup.find_all('li', class_='summary_detail product_platforms'):
+                for second_platform in other_platform.find_all('a', class_='hover_none'):
+                    platform_list.append(second_platform.text.strip())
+            item_info['Platform'] = ', '.join(platform_list)
             genre_list = []
-            for index, genre in enumerate(soup.find('div', class_='genres').find_all('span')):
-                if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
+            for multi_genre in soup.find_all('li', class_='summary_detail product_genre'):
+                for genre in multi_genre.find_all('span', class_='data'):
                     genre_list.append(genre.text.strip())
             item_info['Genres'] = ', '.join(genre_list)
-            starring_list = []
-            for index, starring in enumerate(soup.find_all('div', class_='summary_cast details_section')):
-                for name in starring.find_all('a'):
-                    starring_list.append(name.text.strip())
-            item_info['Starring'] = ', '.join(starring_list)
-            for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
-                item_info['Summary'] = list(list(summary.children)[3].children)[1].text
+            for rating in soup.find_all('li', class_='summary_detail product_rating'):
+                item_info['Rating'] = rating.find('span', class_='data').text
+            for summary in soup.find_all('li', class_='summary_detail product_summary'):
+                if summary.find('span', class_='blurb blurb_expanded') is None:  # for game with a short summary
+                    item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
+                else:
+                    item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
+
             print(item_info)
         except IOError:
             logging.error(f'unable to find page to scrape url incorrect!')
@@ -143,7 +152,7 @@ class Scrapper:
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
         logging.info(f'successfully created url batch list')
-        for the_number, res in enumerate(response):
+        for res in response:
             try:
                 soup = BeautifulSoup(res.content, 'lxml')
                 critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
@@ -186,7 +195,7 @@ class Scrapper:
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
         logging.info(f'successfully created url batch list')
-        for the_number, res in enumerate(response):
+        for res in response:
             try:
                 soup = BeautifulSoup(res.content, 'lxml')
                 critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
@@ -224,18 +233,82 @@ class Scrapper:
                 continue
             logging.info(f'scraping a batch of urls')
 
+    def parallel_game_scraper(self):
+        """
+        For each url extracted by search_pages_url, this method extracts film name and director.
+        works in a batch method (sends a batch to be extracted)
+        :return:
+        """
+        item_info = {}
+        page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
+        response = grequests.map(page, size=cfg.BATCH_SIZE)
+        logging.info(f'successfully created url batch list')
+        for res in response:
+            try:
+                soup = BeautifulSoup(res.content, 'lxml')
+                critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
+                for critic_ttl_score in soup.find_all('span', class_=critic_meta_score_expression, limit=1):
+                    item_info['Metascore'] = critic_ttl_score.text
+                user_score_expression = re.compile('metascore_w user')  # expression to find the user score
+                for user_ttl_score in soup.find_all('span', class_=user_score_expression, limit=1):
+                    item_info['User score'] = user_ttl_score.text
+                for title in soup.find_all('h1'):
+                    item_info['Title'] = title.text
+                # TODO:the year loop need to fix to take only second element
+                for release_year in soup.find('li', class_='summary_detail release_data').find_all('span',
+                                                                                                   class_='data'):
+                    item_info['Release Year'] = release_year.text
+                for studio in soup.find('li', class_='summary_detail developer').find_all('a', class_='button'):
+                    item_info['Studio'] = studio.text
+                # TODO: Need to check multiple creators
+                platform_list = []
+                for platform in soup.find('span', class_='platform').find_all('a'):
+                    platform_list.append(platform.text.strip())
+                for other_platform in soup.find_all('li', class_='summary_detail product_platforms'):
+                    for second_platform in other_platform.find_all('a', class_='hover_none'):
+                        platform_list.append(second_platform.text.strip())
+                item_info['Platform'] = ', '.join(platform_list)
+                genre_list = []
+                for multi_genre in soup.find_all('li', class_='summary_detail product_genre'):
+                    for genre in multi_genre.find_all('span', class_='data'):
+                        genre_list.append(genre.text.strip())
+                item_info['Genres'] = ', '.join(genre_list)
+                for rating in soup.find_all('li', class_='summary_detail product_rating'):
+                    item_info['Rating'] = rating.find('span', class_='data').text
+                for summary in soup.find_all('li', class_='summary_detail product_summary'):
+                    if summary.find('span', class_='blurb blurb_expanded') is None:  # for game with a short summary
+                        item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
+                    else:
+                        item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
+                print(item_info)
+            except AttributeError:
+                logging.error(f'unable send batch to scrape')
+                continue
+            logging.info(f'scraping a batch of urls')
+
 
 def main():
-    the_scraper = Scrapper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
+    the_scraper_game = Scrapper(cfg.EXAMPLE_WEB_PAGE_GAMES)
+    the_scraper_tv = Scrapper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
+    the_scraper_movie = Scrapper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
+    part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
-    # the_scraper.concurrent_page_scraping()
+    the_scraper_tv.parallel_tv_show_scraper()
     part_1_seconds_after = time.time()
     part_2_seconds_before = time.time()
-    the_scraper.parallel_tv_show_scraper()
+    the_scraper_game.parallel_game_scraper()
     part_2_seconds_after = time.time()
-    print(f"part 1 time :{part_1_seconds_after - part_1_seconds_before}")
-    print(f"part 2 time :{part_2_seconds_after-part_2_seconds_before}")
+    part_3_seconds_before = time.time()
+    the_scraper_movie.parallel_movie_scraper()
+    part_3_seconds_after = time.time()
+    part_4_seconds_after = time.time()
+    print(f"part tv time :{part_1_seconds_after - part_1_seconds_before}")
+    print(f"part game time :{part_2_seconds_after - part_2_seconds_before}")
+    print(f"part movie time :{part_3_seconds_after - part_3_seconds_before}")
+    print(f"part total time :{part_4_seconds_after - part_4_seconds_before}")
 
 
 if __name__ == '__main__':
     main()
+
+
