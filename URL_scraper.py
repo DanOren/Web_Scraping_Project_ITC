@@ -65,12 +65,13 @@ class Scraper:
         try:
             self.index_url_list.append(input_url)
             num_of_pages = int(soup.find('li', class_='page last_page').find('a', class_='page_num').text)
-            for page_num in range (1,num_of_pages):
+            for page_num in range(1, num_of_pages):
                 # Every url extracted is relative to the main anchor page
                 url_number = '&page=' + str(page_num)
                 self.index_url_list.append(input_url + url_number)
         except IOError:
             logging.critical(f'Unable created a list of the index pages urls.')
+        print(self.index_url_list)
         logging.info(f'Successfully created a list of the index pages urls.')
 
     def get_item_urls_list(self):
@@ -190,9 +191,8 @@ class Scraper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
-                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 self.container[unique_identifier] = item_info
-               #  TODO: Add Genre.
             except AttributeError:
                 logging.error(f'Unable to send batch to scrape.')
                 continue
@@ -242,7 +242,7 @@ class Scraper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
-                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 self.container[unique_identifier] = item_info
             except AttributeError:
                 logging.error(f'Unable send batch to scrape.')
@@ -298,7 +298,7 @@ class Scraper:
                     else:
                         item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
                 print(item_info)
-                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 self.container[unique_identifier] = item_info
             except AttributeError:
                 logging.error(f'unable send batch to scrape')
@@ -307,19 +307,19 @@ class Scraper:
 
 
 def main():
-    the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES)
-    the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
-    the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
+    the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
+    # the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
+    # the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
     # the_scraper_movie.debug_concurrent_page_scraping()
     part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
-    the_scraper_tv.parallel_tv_show_scraper()
+    # the_scraper_tv.parallel_tv_show_scraper()
     part_1_seconds_after = time.time()
     part_2_seconds_before = time.time()
     the_scraper_game.parallel_game_scraper()
     part_2_seconds_after = time.time()
     part_3_seconds_before = time.time()
-    the_scraper_movie.parallel_movie_scraper()
+    # the_scraper_movie.parallel_movie_scraper()
     part_3_seconds_after = time.time()
     part_4_seconds_after = time.time()
     print(f"part tv time :{part_1_seconds_after - part_1_seconds_before}")
