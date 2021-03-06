@@ -24,5 +24,5 @@ stream_handler.setLevel(logging.INFO)
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-class Database:
-    def __init__(self):
+# class Database:
+#     def __init__(self):
