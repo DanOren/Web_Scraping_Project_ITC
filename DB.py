@@ -10,10 +10,10 @@ import re
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-# Create Formatter
+# Create formatter
 formatter = logging.Formatter('%(asctime)s-FILE:%(filename)s-FUNC:%(funcName)s-LINE:%(lineno)d-%(message)s')
 
-# Create a file handler and add it to logger
+# Create a file handler and add it to logger.
 file_handler = logging.FileHandler('web_scraper.log')
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
