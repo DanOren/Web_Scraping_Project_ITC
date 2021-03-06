@@ -27,6 +27,11 @@ logger.addHandler(stream_handler)
 
 class Scraper:
     def __init__(self, anchor_url):
+        # Container of all the data from scraping
+        self.container = {}
+        # Type of Scaper (Movie, Tv show, Games)
+        self.type = re.findall(r'/browse/(.+?)/', anchor_url)[0]
+        self.get_type()
         # URLs for index pages off anchor page.
         self.index_url_list = []
         # URLs from each index page. These are the items that will be scraped.
@@ -37,6 +42,12 @@ class Scraper:
         # Creates the list of the URL for each item to be scraped.
         self.get_item_urls_list()
         # self.parallel_page_scraper()
+
+    def get_type(self):
+        logging.info(f'Scrapper type is {self.type}')
+
+    def get_container(self):
+        return self.container
 
     def get_index_pages_urls_list(self, input_url):
         """
@@ -53,10 +64,11 @@ class Scraper:
         # Loops through each item on the index page and extracts the url of the item into a list.
         try:
             self.index_url_list.append(input_url)
-            for article in soup.find_all('a', class_='page_num', href=True):
-                # Every url extracted is relative - without the main page
-                self.index_url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
-            print(self.index_url_list)
+            num_of_pages = int(soup.find('li', class_='page last_page').find('a', class_='page_num').text)
+            for page_num in range (1,num_of_pages):
+                # Every url extracted is relative to the main anchor page
+                url_number = '&page=' + str(page_num)
+                self.index_url_list.append(input_url + url_number)
         except IOError:
             logging.critical(f'Unable created a list of the index pages urls.')
         logging.info(f'Successfully created a list of the index pages urls.')
@@ -86,7 +98,7 @@ class Scraper:
         print(self.url_list)
         logging.info(f'Successfully created list of urls for items to scrape.')
 
-    def concurrent_page_scraping(self):
+    def debug_concurrent_page_scraping(self):
         """
         calls the debug_data_scraper method and scrapes each page one at a time.
         :return:
@@ -113,31 +125,25 @@ class Scraper:
                 item_info['User score'] = user_ttl_score.text
             for title in soup.find_all('h1'):
                 item_info['Title'] = title.text
-            # TODO:the year loop need to fix to take only second element
-            for release_year in soup.find('li', class_='summary_detail release_data').find_all('span', class_='data'):
+            release_year_expression = re.compile('release_year')  # expression to find the largest score
+            for release_year in soup.find_all('span', class_=release_year_expression, limit=1):
                 item_info['Release Year'] = release_year.text
-            for studio in soup.find('li', class_='summary_detail developer').find_all('a', class_='button'):
+            studio_expression = re.compile('/company')  # expression to find the studio
+            for studio in soup.find_all('a', href=studio_expression, limit=1):
                 item_info['Studio'] = studio.text
-            # TODO: Need to check multiple creators
-            platform_list = []
-            for platform in soup.find('span', class_='platform').find_all('a'):
-                platform_list.append(platform.text.strip())
-            for other_platform in soup.find_all('li', class_='summary_detail product_platforms'):
-                for second_platform in other_platform.find_all('a', class_='hover_none'):
-                    platform_list.append(second_platform.text.strip())
-            item_info['Platform'] = ', '.join(platform_list)
+            for director in soup.find_all('div', class_='director', limit=1):
+                item_info['Director'] = list(list(director.children)[3].children)[0].text
+            for rating in soup.find_all('div', class_='rating', limit=1):
+                item_info['Rating'] = list(rating.children)[3].text.strip()
+            for runtime in soup.find_all('div', class_='runtime', limit=1):
+                item_info['Runtime'] = list(runtime.children)[3].text
+            for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
+                item_info['Summary'] = list(list(summary.children)[3].children)[1].text
             genre_list = []
-            for multi_genre in soup.find_all('li', class_='summary_detail product_genre'):
-                for genre in multi_genre.find_all('span', class_='data'):
+            for index, genre in enumerate(soup.find('div', class_='genres').find_all('span')):
+                if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
                     genre_list.append(genre.text.strip())
-            item_info['Genres'] = ', '.join(genre_list)
-            for rating in soup.find_all('li', class_='summary_detail product_rating'):
-                item_info['Rating'] = rating.find('span', class_='data').text
-            for summary in soup.find_all('li', class_='summary_detail product_summary'):
-                if summary.find('span', class_='blurb blurb_expanded') is None:  # for game with a short summary
-                    item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
-                else:
-                    item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
+            item_info['Genres'] = genre_list
             print(item_info)
         except IOError:
             logging.error(f'unable to find page to scrape url incorrect!')
@@ -154,6 +160,7 @@ class Scraper:
         logging.info(f'Successfully created url batch list.')
         for res in response:
             try:
+                item_info = {}
                 soup = BeautifulSoup(res.content, 'lxml')
                 critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
                 for critic_ttl_score in soup.find_all('span', class_=critic_meta_score_expression, limit=1):
@@ -171,6 +178,11 @@ class Scraper:
                     item_info['Studio'] = studio.text
                 for director in soup.find_all('div', class_='director', limit=1):
                     item_info['Director'] = list(list(director.children)[3].children)[0].text
+                genre_list = []
+                for index, genre in enumerate(soup.find('div', class_='genres').find_all('span')):
+                    if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
+                        genre_list.append(genre.text.strip())
+                item_info['Genres'] = genre_list
                 for rating in soup.find_all('div', class_='rating', limit=1):
                     item_info['Rating'] = list(rating.children)[3].text.strip()
                 for runtime in soup.find_all('div', class_='runtime', limit=1):
@@ -178,6 +190,8 @@ class Scraper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
+                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                self.container[unique_identifier] = item_info
                #  TODO: Add Genre.
             except AttributeError:
                 logging.error(f'Unable to send batch to scrape.')
@@ -190,12 +204,13 @@ class Scraper:
         required for each TV show item. Sends a batch to be extracted using grequests.
         :return:
         """
-        item_info = {}
+
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
         logging.info(f'Successfully created url batch list')
         for res in response:
             try:
+                item_info = {}
                 soup = BeautifulSoup(res.content, 'lxml')
                 critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
                 for critic_ttl_score in soup.find_all('span', class_=critic_meta_score_expression, limit=1):
@@ -227,6 +242,8 @@ class Scraper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
+                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                self.container[unique_identifier] = item_info
             except AttributeError:
                 logging.error(f'Unable send batch to scrape.')
                 continue
@@ -238,12 +255,13 @@ class Scraper:
         required for each TV show item. Sends a batch to be extracted using grequests.
         :return:
         """
-        item_info = {}
+
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
         logging.info(f'Successfully created url batch list')
         for res in response:
             try:
+                item_info = {}
                 soup = BeautifulSoup(res.content, 'lxml')
                 critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
                 for critic_ttl_score in soup.find_all('span', class_=critic_meta_score_expression, limit=1):
@@ -280,6 +298,8 @@ class Scraper:
                     else:
                         item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
                 print(item_info)
+                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                self.container[unique_identifier] = item_info
             except AttributeError:
                 logging.error(f'unable send batch to scrape')
                 continue
@@ -290,6 +310,7 @@ def main():
     the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES)
     the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
     the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
+    # the_scraper_movie.debug_concurrent_page_scraping()
     part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
     the_scraper_tv.parallel_tv_show_scraper()
