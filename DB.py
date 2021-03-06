@@ -27,6 +27,9 @@ logger.setLevel(logging.DEBUG)
 
 class Database:
     def __init__(self):
+        """
+        Initialisation function for Database class.
+        """
         self.db_name = cfg.DATABASE_NAME
         self.cur = self.connect_to_db()
         # self.cur updated after DB confirmed/created
@@ -147,9 +150,6 @@ class Database:
                   FOREIGN KEY(game_id) REFERENCES games(id),
                   FOREIGN KEY(genre_id) REFERENCES genres(id)
                 );
-                
-                
-                
                 CREATE TABLE IF NOT EXISTS games_platforms (
                   id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
                   game_id int,
