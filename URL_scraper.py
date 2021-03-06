@@ -25,16 +25,20 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
 
-class Scrapper:
-    def __init__(self, input_web_page):
-        self.branch_url_list = []   # list of urls that are the list of items.
-        self.url_list = []          # list of urls that contain the items we want to scrape
-        # methods for initialization of the scraper
-        self.branch_pages_urls_list(input_web_page)
-        self.end_pages_urls_list()
+class Scraper:
+    def __init__(self, anchor_url):
+        # URLs for index pages off anchor page.
+        self.index_url_list = []
+        # URLs from each index page. These are the items that will be scraped.
+        self.url_list = []
+        # Methods for initialisation of the scraper
+        # Creates the list of index pages needed to get item URLs.
+        self.get_index_pages_urls_list(anchor_url)
+        # Creates the list of the URL for each item to be scraped.
+        self.get_item_urls_list()
         # self.parallel_page_scraper()
 
-    def branch_pages_urls_list(self, input_url):
+    def get_index_pages_urls_list(self, input_url):
         """
             Receives a url.
             Returns all the urls for items on that index page.
@@ -43,26 +47,26 @@ class Scrapper:
         try:
             source = requests.get(input_url, headers=cfg.USER_AGENT).text
         except IOError:
-            logging.critical(f'Incorrect branch url to scrape')
+            logging.critical(f'Incorrect anchor url to scrape.')
             sys.exit(1)
         soup = BeautifulSoup(source, 'lxml')
         # Loops through each item on the index page and extracts the url of the item into a list.
         try:
-            self.branch_url_list.append(input_url)
+            self.index_url_list.append(input_url)
             for article in soup.find_all('a', class_='page_num', href=True):
                 # Every url extracted is relative - without the main page
-                self.branch_url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
-            print(self.branch_url_list)
+                self.index_url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
+            print(self.index_url_list)
         except IOError:
-            logging.critical(f'unable created a List of the branch urls to search for urls.')
-        logging.info(f'successfully created a List of the branch urls to search for urls.')
+            logging.critical(f'Unable created a list of the index pages urls.')
+        logging.info(f'Successfully created a list of the index pages urls.')
 
-    def end_pages_urls_list(self):
+    def get_item_urls_list(self):
         """
-            Receives a branch url.
-            scrapes all the urls for items on the branch url list.
+            For each index page url in self.index_url_list, scrapes to extract the url for
+            each item to be included in scrape.
             """
-        for url in self.branch_url_list:
+        for url in self.index_url_list:
             try:
                 source = requests.get(url, headers=cfg.USER_AGENT).text
             except IOError:
@@ -70,23 +74,21 @@ class Scrapper:
                 sys.exit(1)
             soup = BeautifulSoup(source, 'lxml')
             # Loops through each item on the index page and extracts the url of the item into a list.
-            list_of_names = []  # this is mostly for games due to multi-platforms.
+            list_of_names = []  # This is mostly for games due to multi-platforms.
             try:
                 for article in soup.find_all('a', class_='title', href=True):
                     # Every url extracted is relative - without the main page
                     if article.text not in list_of_names:
                         self.url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
                         list_of_names.append(article.text)
-
-
             except IOError:
-                logging.critical(f'unable to create url list to scrape')
+                logging.critical(f'Unable to create url list to scrape, from this index page.')
         print(self.url_list)
-        logging.info(f'successfully created list of urls')
+        logging.info(f'Successfully created list of urls for items to scrape.')
 
     def concurrent_page_scraping(self):
         """
-        calls the page_data_scraper method and scrapes each page one at a time.
+        calls the debug_data_scraper method and scrapes each page one at a time.
         :return:
         """
         for index, url in enumerate(self.url_list):
@@ -94,13 +96,12 @@ class Scrapper:
 
     def debug_data_scraper(self, input_url):  # TODO: this is for tests on on other types of web scrapers
         """
-        For each url extracted by search_pages_url, this method extracts film name and director.
-        works on 1 url at a time
+        Scrapes a specific item.
         :param input_url:
         """
         item_info = {}
-        logging.info(f'scraping a url')
-        logging.debug(f'the url scrapped is : {input_url}')
+        logging.info(f'Scraping a url')
+        logging.debug(f'The url scraped is : {input_url}')
         try:
             source = requests.get(input_url, headers=cfg.USER_AGENT).text
             soup = BeautifulSoup(source, 'lxml')
@@ -137,21 +138,20 @@ class Scrapper:
                     item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
                 else:
                     item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
-
             print(item_info)
         except IOError:
             logging.error(f'unable to find page to scrape url incorrect!')
 
     def parallel_movie_scraper(self):
         """
-        For each url extracted by search_pages_url, this method extracts film name and director.
-        works in a batch method (sends a batch to be extracted)
+        For each url in self.url_list, this method extracts all info
+        required for each movie item. Sends a batch to be extracted using grequests.
         :return:
         """
         item_info = {}
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
-        logging.info(f'successfully created url batch list')
+        logging.info(f'Successfully created url batch list.')
         for res in response:
             try:
                 soup = BeautifulSoup(res.content, 'lxml')
@@ -169,9 +169,7 @@ class Scrapper:
                 studio_expression = re.compile('/company')  # expression to find the studio
                 for studio in soup.find_all('a', href=studio_expression, limit=1):
                     item_info['Studio'] = studio.text
-                # dir_expression = re.compile('/person')
                 for director in soup.find_all('div', class_='director', limit=1):
-                    # something = director.find('a', href=True) # TODO: delete me
                     item_info['Director'] = list(list(director.children)[3].children)[0].text
                 for rating in soup.find_all('div', class_='rating', limit=1):
                     item_info['Rating'] = list(rating.children)[3].text.strip()
@@ -180,21 +178,22 @@ class Scrapper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
+               #  TODO: Add Genre.
             except AttributeError:
-                logging.error(f'unable send batch to scrape')
+                logging.error(f'Unable to send batch to scrape.')
                 continue
-            logging.info(f'scraping a batch of urls')
+            logging.info(f'Scraping a batch of item urls.')
 
     def parallel_tv_show_scraper(self):
         """
-        For each url extracted by search_pages_url, this method extracts film name and director.
-        works in a batch method (sends a batch to be extracted)
+        For each url in self.url_list, this method extracts all info
+        required for each TV show item. Sends a batch to be extracted using grequests.
         :return:
         """
         item_info = {}
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
-        logging.info(f'successfully created url batch list')
+        logging.info(f'Successfully created url batch list')
         for res in response:
             try:
                 soup = BeautifulSoup(res.content, 'lxml')
@@ -219,30 +218,30 @@ class Scrapper:
                 for index, genre in enumerate(soup.find('div', class_='genres').find_all('span')):
                     if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
                         genre_list.append(genre.text.strip())
-                item_info['Genres'] = ', '.join(genre_list)
+                item_info['Genres'] = genre_list
                 starring_list = []
                 for index, starring in enumerate(soup.find_all('div', class_='summary_cast details_section')):
                     for name in starring.find_all('a'):
                         starring_list.append(name.text.strip())
-                item_info['Starring'] = ', '.join(starring_list)
+                item_info['Starring'] = starring_list
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
             except AttributeError:
-                logging.error(f'unable send batch to scrape')
+                logging.error(f'Unable send batch to scrape.')
                 continue
-            logging.info(f'scraping a batch of urls')
+            logging.info(f'Scraping a batch of urls.')
 
     def parallel_game_scraper(self):
         """
-        For each url extracted by search_pages_url, this method extracts film name and director.
-        works in a batch method (sends a batch to be extracted)
+        For each url in self.url_list, this method extracts all info
+        required for each TV show item. Sends a batch to be extracted using grequests.
         :return:
         """
         item_info = {}
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
-        logging.info(f'successfully created url batch list')
+        logging.info(f'Successfully created url batch list')
         for res in response:
             try:
                 soup = BeautifulSoup(res.content, 'lxml')
@@ -267,12 +266,12 @@ class Scrapper:
                 for other_platform in soup.find_all('li', class_='summary_detail product_platforms'):
                     for second_platform in other_platform.find_all('a', class_='hover_none'):
                         platform_list.append(second_platform.text.strip())
-                item_info['Platform'] = ', '.join(platform_list)
+                item_info['Platform'] = platform_list
                 genre_list = []
                 for multi_genre in soup.find_all('li', class_='summary_detail product_genre'):
                     for genre in multi_genre.find_all('span', class_='data'):
                         genre_list.append(genre.text.strip())
-                item_info['Genres'] = ', '.join(genre_list)
+                item_info['Genres'] = genre_list
                 for rating in soup.find_all('li', class_='summary_detail product_rating'):
                     item_info['Rating'] = rating.find('span', class_='data').text
                 for summary in soup.find_all('li', class_='summary_detail product_summary'):
@@ -288,9 +287,9 @@ class Scrapper:
 
 
 def main():
-    the_scraper_game = Scrapper(cfg.EXAMPLE_WEB_PAGE_GAMES)
-    the_scraper_tv = Scrapper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
-    the_scraper_movie = Scrapper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
+    the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES)
+    the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
+    the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
     part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
     the_scraper_tv.parallel_tv_show_scraper()
