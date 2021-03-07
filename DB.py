@@ -32,137 +32,153 @@ class Database:
         Initialisation function for Database class.
         """
         self.db_name = cfg.DATABASE_NAME
-        self.cur = self.connect_to_db()
-        # self.cur updated after DB confirmed/created
-        self.cur = self.create_DB()
+        self.con, self.cur = self.connect_to_db()
+        # self.con, self.cur updated after DB confirmed/created
+        self.con, self.cur = self.create_db()
 
     def connect_to_db(self):
-
+        """
+        Creates initial connection and cursor objects
+        :return: con and cursor
+        """
         # Create initial connection object.
         con = pymysql.connect(host='localhost', user='root',
                               password=cfg.PASSWORD_DB_SERVER, cursorclass=pymysql.cursors.DictCursor)
         # Create initial cursor
         cur = con.cursor()
-        return cur
+        return con, cur
 
-    def create_DB(self):
-
-        # Confirm/create DB
+    def create_db(self):
+        """
+        Checks if DB exists. If not, creates it.
+        :return:
+        """
         query = f"CREATE DATABASE IF NOT EXISTS {self.db_name}"
         self.cur.execute(query)
         # Update con with confirmed/new DB info
         con = pymysql.connect(host='localhost', user='root', password=cfg.PASSWORD_DB_SERVER,
                               database=self.db_name, cursorclass=pymysql.cursors.DictCursor)
         cur = con.cursor()
-        return cur
+        return con, cur
 
     def create_tables_DB(self):
-        # Assembles tables as required if don't exist in self.db_name
-        query = """
-                CREATE TABLE IF NOT EXISTS studios (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255)
-                );
-                
-                CREATE TABLE IF NOT EXISTS directors (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255)
-                );
-                
-                CREATE TABLE IF NOT EXISTS genres (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255)
-                );
-                
-                CREATE TABLE IF NOT EXISTS creators (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255)
-                );
-                
-                CREATE TABLE IF NOT EXISTS platforms (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255)
-                );
-                
-                CREATE TABLE IF NOT EXISTS movies (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255) NOT NULL,
-                  unique_identifier varchar(255) NOT NULL,
-                  meta_score float,
-                  user_score float,
-                  release_year int,
-                  rating varchar(255),
-                  runtime float,
-                  summary varchar(10000),
-                  studio_id int,
-                  director_id int,
-                  FOREIGN KEY(studio_id) REFERENCES studios(id),
-                  FOREIGN KEY(director_id) REFERENCES directors(id)
-                );
-                
-                
-                CREATE TABLE IF NOT EXISTS movies_genres (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  movie_id int,
-                  genre_id int,
-                  FOREIGN KEY(movie_id) REFERENCES movies(id),
-                  FOREIGN KEY(genre_id) REFERENCES genres(id)
-                );
-                
-                CREATE TABLE IF NOT EXISTS tv_shows (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255) NOT NULL,
-                  unique_identifier varchar(255) NOT NULL,
-                  meta_score float,
-                  user_score float,
-                  release_year int,
-                  rating varchar(255),
-                  summary varchar(10000),
-                  studio_id int,
-                  creator_id int,
-                  FOREIGN KEY(studio_id) REFERENCES studios(id),
-                  FOREIGN KEY(creator_id) REFERENCES creators(id)
-                );
-                
-                
-                CREATE TABLE IF NOT EXISTS tv_shows_genres (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  tv_show_id int,
-                  genre_id int,
-                  FOREIGN KEY(tv_show_id) REFERENCES tv_shows(id),
-                  FOREIGN KEY(genre_id) REFERENCES genres(id)
-                );
-                
-                CREATE TABLE IF NOT EXISTS games (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  name varchar(255) NOT NULL,
-                  unique_identifier varchar(255) NOT NULL,
-                  meta_score float,
-                  user_score float,
-                  release_year int,
-                  rating varchar(255),
-                  summary varchar(10000),
-                  studio_id int,
-                  FOREIGN KEY(studio_id) REFERENCES studios(id)
-                );
-                
-                CREATE TABLE IF NOT EXISTS games_genres (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  game_id int,
-                  genre_id int,
-                  FOREIGN KEY(game_id) REFERENCES games(id),
-                  FOREIGN KEY(genre_id) REFERENCES genres(id)
-                );
-                CREATE TABLE IF NOT EXISTS games_platforms (
-                  id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                  game_id int,
-                  platform_id int,
-                  FOREIGN KEY(game_id) REFERENCES games(id),
-                  FOREIGN KEY(platform_id) REFERENCES platforms(id)  
-                );
+        """
+        Assembles tables as required if don't exist in self.db_name
+        :return: None
+        """
 
-                """
-        self.cur.execute(query)
+        self.cur.execute("""   
+                            CREATE TABLE studios (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE directors (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE genres (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE creators (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE platforms (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE movies (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255) NOT NULL,
+                            unique_identifier varchar(255) NOT NULL,
+                            meta_score varchar(255),
+                            user_score varchar(255),
+                            release_year varchar(255),
+                            rating varchar(255),
+                            runtime varchar(255),
+                            summary varchar(10000),
+                            studio_id int,
+                            director_id int,
+                            FOREIGN KEY(studio_id) REFERENCES studios(id),
+                            FOREIGN KEY(director_id) REFERENCES directors(id)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE movies_genres (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            movie_id int,
+                            genre_id int,
+                            FOREIGN KEY(movie_id) REFERENCES movies(id),
+                            FOREIGN KEY(genre_id) REFERENCES genres(id)
+                            );""")
+
+        self.cur.execute("""    
+                            CREATE TABLE tv_shows (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255) NOT NULL,
+                            unique_identifier varchar(255) NOT NULL,
+                            meta_score varchar(255),
+                            user_score varchar(255),
+                            release_year varchar(255),
+                            rating varchar(255),
+                            summary varchar(10000),
+                            studio_id int,
+                            creator_id int,
+                            FOREIGN KEY(studio_id) REFERENCES studios(id),
+                            FOREIGN KEY(creator_id) REFERENCES creators(id)
+                            );""")
+
+        self.cur.execute("""
+                            CREATE TABLE tv_shows_genres (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            tv_show_id int,
+                            genre_id int,
+                            FOREIGN KEY(tv_show_id) REFERENCES tv_shows(id),
+                            FOREIGN KEY(genre_id) REFERENCES genres(id)    
+                            );""")
+
+        self.cur.execute("""
+                            CREATE TABLE games (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            name varchar(255) NOT NULL,
+                            unique_identifier varchar(255) NOT NULL,
+                            meta_score varchar(255),
+                            user_score varchar(255),
+                            release_year varchar(255),
+                            rating varchar(255),
+                            summary varchar(10000),
+                            studio_id int,
+                            FOREIGN KEY(studio_id) REFERENCES studios(id)
+                            );""")
+
+        self.cur.execute("""
+                            CREATE TABLE games_genres (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            game_id int,
+                            genre_id int,
+                            FOREIGN KEY(game_id) REFERENCES games(id),
+                            FOREIGN KEY(genre_id) REFERENCES genres(id)
+                            );""")
+
+        self.cur.execute("""                          
+                            CREATE TABLE games_platforms (
+                            id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+                            game_id int,
+                            platform_id int,
+                            FOREIGN KEY(game_id) REFERENCES games(id),
+                            FOREIGN KEY(platform_id) REFERENCES platforms(id)  
+                            );""")
 
     def populate_tables_movies(self, container):
         """
@@ -175,7 +191,9 @@ class Database:
         # len container
         # enumerate
         # index from enumerte is # 100 or == len -1
-        for key, item in container.items():
+        commit_number = 100
+
+        for index, key, item in enumerate(container.items()):
             unique_identifier = key
             # Check if movie already in table
             self.cur.execute(f'SELECT id FROM movies WHERE unique_identifier={unique_identifier};')
@@ -183,8 +201,8 @@ class Database:
             movie_id = row['id']
             if row['id'] is None:
                 item_info = container[item]
-                meta_score = float(item_info['Metascore'])
-                user_score = float(item_info['User score'])
+                meta_score = item_info['Metascore']
+                user_score = item_info['User score']
                 title = item_info['Title']
                 year = item_info['Release Year']
                 studio = item_info['Studio']
@@ -234,9 +252,26 @@ class Database:
                         genre_id = row['id']
                     # Insert this movie, genre combination into movies_genres table
                     self.cur.execute(f'INSERT INTO movies_genres (movie_id, genre_id) VALUES ({movie_id}, {genre_id});')
+
+                    if index == commit_number or index == len(container) - 1:
+                        self.con.commit()
             else:
                 # If movie already in movies_table, don't add.
                 continue
+
+
+
+
+
+db1 = Database()
+
+assert db1.db_name == 'METACRITIC_DB'
+db1.connect_to_db()
+db1.create_db()
+db1.populate_tables_movies()
+
+print(db1.db_name)
+
 
 
 
