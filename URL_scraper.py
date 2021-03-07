@@ -190,7 +190,7 @@ class Scraper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
-                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 self.container[unique_identifier] = item_info
                #  TODO: Add Genre.
             except AttributeError:
@@ -242,7 +242,7 @@ class Scraper:
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 print(item_info)
-                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 self.container[unique_identifier] = item_info
             except AttributeError:
                 logging.error(f'Unable send batch to scrape.')
@@ -298,7 +298,7 @@ class Scraper:
                     else:
                         item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
                 print(item_info)
-                unique_identifier = str(item_info['Title'].value() + '_' + item_info['Release Year'].value())
+                unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 self.container[unique_identifier] = item_info
             except AttributeError:
                 logging.error(f'unable send batch to scrape')

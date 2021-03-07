@@ -25,6 +25,7 @@ logger.setLevel(logging.DEBUG)
 # stream_handler.setFormatter(formatter)
 # logger.addHandler(stream_handler)
 
+
 class Database:
     def __init__(self):
         """
@@ -38,7 +39,8 @@ class Database:
     def connect_to_db(self):
 
         # Create initial connection object.
-        con = pymysql.connect(host='localhost', user='root', password=cfg.PASSWORD_DB_SERVER, cursorclass=pymysql.cursors.DictCursor)
+        con = pymysql.connect(host='localhost', user='root',
+                              password=cfg.PASSWORD_DB_SERVER, cursorclass=pymysql.cursors.DictCursor)
         # Create initial cursor
         cur = con.cursor()
         return cur
@@ -49,7 +51,8 @@ class Database:
         query = f"CREATE DATABASE IF NOT EXISTS {self.db_name}"
         self.cur.execute(query)
         # Update con with confirmed/new DB info
-        con = pymysql.connect(host='localhost', user='root', password=cfg.PASSWORD_DB_SERVER, database=self.db_name, cursorclass=pymysql.cursors.DictCursor)
+        con = pymysql.connect(host='localhost', user='root', password=cfg.PASSWORD_DB_SERVER,
+                              database=self.db_name, cursorclass=pymysql.cursors.DictCursor)
         cur = con.cursor()
         return cur
 
@@ -169,6 +172,9 @@ class Database:
         :param container: Dictionary
         :return: None
         """
+        # len container
+        # enumerate
+        # index from enumerte is # 100 or == len -1
         for key, item in container.items():
             unique_identifier = key
             # Check if movie already in table
