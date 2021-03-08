@@ -2,19 +2,21 @@ import argparse
 import URL_scraper as sc
 import config as cfg
 import sys
-filename_error = "command_calculator.py: error: "
 parser = argparse.ArgumentParser(description='Welcome to Metacritic scraper, Please enter 3 parameters,'
                                              'Which type of data to scrape, by what method to scrape it by,'
                                              'and the parameter to scrape by.')
-parser.add_argument('type_to_scrap', nargs='?', type=str, help='Movies,Tv Shows or Games', default=None)
-parser.add_argument('how_to_scrape', nargs='?', type=str, help='Scrape by year or genre', default=None)
-parser.add_argument('val_to_scrape', nargs='?', type=str, help='Value to scrape by', default=None)
-args = parser.parse_args()
+parser.add_argument('type_to_scrap', nargs='?', type=str,
+                    help='movies,tv or games', default=None)
+parser.add_argument('how_to_scrape', nargs='?', type=str,
+                    help='Scrape by year or genre', default=None)
+parser.add_argument('val_to_scrape', nargs='?', type=str,
+                    help='Value to scrape by', default=None)
+args, unknown = parser.parse_known_args()
 
 
 def movie(how_to_scrape, val_to_scrape):
     """
-
+    command to scrape a url that is based on movies
     """
     url = ''
     if how_to_scrape == 'year':
@@ -28,7 +30,7 @@ def movie(how_to_scrape, val_to_scrape):
 
 def tv_show(how_to_scrape, val_to_scrape):
     """
-
+    command to scrape a url that is based on tv shows
     """
     url = ''
     if how_to_scrape == 'year':
@@ -42,7 +44,7 @@ def tv_show(how_to_scrape, val_to_scrape):
 
 def game(how_to_scrape, val_to_scrape):
     """
-
+    command to scrape a url that is based on games
     """
     url = ''
     if how_to_scrape == 'year':
@@ -57,25 +59,19 @@ def game(how_to_scrape, val_to_scrape):
 commands = {
             'movies': movie,
             'tv_show': tv_show,
+            'tv': tv_show,
             'games': game}
-
-
-def valid_length(the_args):
-    """
-    Checks if there are enough arguments from the user
-    :param the_args: args
-    """
-    if the_args.type_to_scrap is None or the_args.how_to_scrape is None or the_args.val_to_scrape is None:
-        raise IOError('Not enough input parameters!')
 
 
 def check_input():
     """
-    Prints to the screen if the user added optional argument
-    :return:
+    checks if the user input is correct
     """
-
-    valid_length(args)
+    if args.type_to_scrap is None or args.how_to_scrape is None \
+            or args.val_to_scrape is None and len(args) != 3:
+        raise IOError('Not enough input parameters!')
+    if len(unknown) > 0:
+        raise IOError('Not enough input parameters!')
     if args.type_to_scrap not in ['movies', 'tv_show', 'games']:
         raise IOError(f'Unknown command {args.type_to_scrap}')
     if args.how_to_scrape not in ['year', 'genre']:
@@ -90,7 +86,7 @@ def check_input():
 
 def main():
     try:
-        flag = check_input()
+        check_input()
     except Exception as e:
         print(e)
         sys.exit(1)

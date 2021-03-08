@@ -6,6 +6,7 @@ import config as cfg
 import logging
 import sys
 import re
+import pandas as pd
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -28,10 +29,11 @@ logger.addHandler(stream_handler)
 class Scraper:
     def __init__(self, anchor_url):
         # Container of all the data from scraping
-        self.container = {}
+        self.container = pd.DataFrame()
         # Type of Scaper (Movie, Tv show, Games)
         self.type = re.findall(r'/browse/(.+?)/', anchor_url)[0]
         self.get_type()
+        self.create_container()
         # URLs for index pages off anchor page.
         self.index_url_list = []
         # URLs from each index page. These are the items that will be scraped.
@@ -39,15 +41,48 @@ class Scraper:
         # Methods for initialisation of the scraper
         # Creates the list of index pages needed to get item URLs.
         self.get_index_pages_urls_list(anchor_url)
+        self.index_url_length = len(self.index_url_list)
         # Creates the list of the URL for each item to be scraped.
         self.get_item_urls_list()
+        self.items_url_length = len(self.url_list)
         # self.parallel_page_scraper()
 
     def get_type(self):
+        """
+        Returns type of Scraper (Movies, Tv Shows, Games)
+        :return: Scraper type
+        """
         logging.info(f'Scrapper type is {self.type}')
+        return self.type
 
     def get_container(self):
+        """
+        Rturens the Dataframe
+        :return: Pandas Dataframe
+        """
         return self.container
+
+    def get_container_num_of_rows(self):
+        """
+        return amount of rows in dataframe
+        :return:
+        """
+        return self.container.shape[0]
+
+    def create_container(self):
+        """
+        create a Pandas Dataframe according to the columns for each type of scraper (Movies, Tv Shows, Games)
+        :return:
+        """
+        if self.type == 'movies':
+            self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
+                                                   'Director', 'Rating', 'Genres', 'Runtime', 'Summary'])
+        elif self.type == 'tv':
+            self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
+                                                   'Creator', 'Genres', 'Starring', 'Summary'])
+        elif self.type == 'games':
+            self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
+                                                   'Platform', 'Genres', 'Rating', 'Summary'])
 
     def get_index_pages_urls_list(self, input_url):
         """
@@ -64,14 +99,15 @@ class Scraper:
         # Loops through each item on the index page and extracts the url of the item into a list.
         try:
             self.index_url_list.append(input_url)
-            num_of_pages = int(soup.find('li', class_='page last_page').find('a', class_='page_num').text)
-            for page_num in range(1, num_of_pages):
-                # Every url extracted is relative to the main anchor page
-                url_number = '&page=' + str(page_num)
-                self.index_url_list.append(input_url + url_number)
+            if soup.find('li', class_='page last_page') is not None:  # Check if there are more then 1 page in a anchor
+                num_of_pages = int(soup.find('li', class_='page last_page').find('a', class_='page_num').text)
+                for page_num in range(1, num_of_pages):
+                    # Every url extracted is relative to the main anchor page
+                    url_number = '&page=' + str(page_num)
+                    self.index_url_list.append(input_url + url_number)
         except IOError:
             logging.critical(f'Unable created a list of the index pages urls.')
-        print(self.index_url_list)
+        logging.info(f'There are {len(self.index_url_list)} anchor pages to scrape')
         logging.info(f'Successfully created a list of the index pages urls.')
 
     def get_item_urls_list(self):
@@ -96,8 +132,8 @@ class Scraper:
                         list_of_names.append(article.text)
             except IOError:
                 logging.critical(f'Unable to create url list to scrape, from this index page.')
-        print(self.url_list)
-        logging.info(f'Successfully created list of urls for items to scrape.')
+        logging.info(f'there are {len(self.url_list)} items to scrape')
+        logging.debug(f'Successfully created list of urls for items to scrape.')
 
     def debug_concurrent_page_scraping(self):
         """
@@ -113,7 +149,7 @@ class Scraper:
         :param input_url:
         """
         item_info = {}
-        logging.info(f'Scraping a url')
+        logging.debug(f'Scraping a url')
         logging.debug(f'The url scraped is : {input_url}')
         try:
             source = requests.get(input_url, headers=cfg.USER_AGENT).text
@@ -145,7 +181,10 @@ class Scraper:
                 if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
                     genre_list.append(genre.text.strip())
             item_info['Genres'] = genre_list
-            print(item_info)
+            unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
+            item_series = pd.Series(item_info)
+            item_series.name = unique_identifier
+            self.container = self.container.append(item_series)
         except IOError:
             logging.error(f'unable to find page to scrape url incorrect!')
 
@@ -155,7 +194,6 @@ class Scraper:
         required for each movie item. Sends a batch to be extracted using grequests.
         :return:
         """
-        item_info = {}
         page = (grequests.get(u, headers=cfg.USER_AGENT) for u in self.url_list)
         response = grequests.map(page, size=cfg.BATCH_SIZE)
         logging.info(f'Successfully created url batch list.')
@@ -190,13 +228,14 @@ class Scraper:
                     item_info['Runtime'] = list(runtime.children)[3].text
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
-                print(item_info)
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
-                self.container[unique_identifier] = item_info
+                item_series = pd.Series(item_info)
+                item_series.name = unique_identifier
+                self.container = self.container.append(item_series)
             except AttributeError:
                 logging.error(f'Unable to send batch to scrape.')
                 continue
-            logging.info(f'Scraping a batch of item urls.')
+            logging.debug(f'Scraping a batch of item urls.')
 
     def parallel_tv_show_scraper(self):
         """
@@ -241,13 +280,14 @@ class Scraper:
                 item_info['Starring'] = starring_list
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
-                print(item_info)
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
-                self.container[unique_identifier] = item_info
+                item_series = pd.Series(item_info)
+                item_series.name = unique_identifier
+                self.container = self.container.append(item_series)
             except AttributeError:
                 logging.error(f'Unable send batch to scrape.')
                 continue
-            logging.info(f'Scraping a batch of urls.')
+            logging.debug(f'Scraping a batch of urls.')
 
     def parallel_game_scraper(self):
         """
@@ -279,11 +319,14 @@ class Scraper:
                     item_info['Studio'] = studio.text
                 # TODO: Need to check multiple creators
                 platform_list = []
-                for platform in soup.find('span', class_='platform').find_all('a'):
-                    platform_list.append(platform.text.strip())
-                for other_platform in soup.find_all('li', class_='summary_detail product_platforms'):
-                    for second_platform in other_platform.find_all('a', class_='hover_none'):
-                        platform_list.append(second_platform.text.strip())
+                if soup.find('span', class_='platform').find_all('a') is None:
+                    platform_list.append(soup.find('span', class_='platform').text.strip())
+                else:
+                    for platform in soup.find('span', class_='platform').find_all('a'):
+                        platform_list.append(platform.text.strip())
+                    for other_platform in soup.find_all('li', class_='summary_detail product_platforms'):
+                        for second_platform in other_platform.find_all('a', class_='hover_none'):
+                            platform_list.append(second_platform.text.strip())
                 item_info['Platform'] = platform_list
                 genre_list = []
                 for multi_genre in soup.find_all('li', class_='summary_detail product_genre'):
@@ -297,26 +340,27 @@ class Scraper:
                         item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
                     else:
                         item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
-                print(item_info)
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
-                self.container[unique_identifier] = item_info
+                item_series = pd.Series(item_info)
+                item_series.name = unique_identifier
+                self.container = self.container.append(item_series)
             except AttributeError:
                 logging.error(f'unable send batch to scrape')
                 continue
-            logging.info(f'scraping a batch of urls')
+            logging.debug(f'scraping a batch of urls')
 
 
 def main():
-    the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
+    # the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
     # the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
-    # the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
-    # the_scraper_movie.debug_concurrent_page_scraping()
+    the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE_2)
+    the_scraper_movie.debug_concurrent_page_scraping()
     part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
     # the_scraper_tv.parallel_tv_show_scraper()
     part_1_seconds_after = time.time()
     part_2_seconds_before = time.time()
-    the_scraper_game.parallel_game_scraper()
+    # the_scraper_game.parallel_game_scraper()
     part_2_seconds_after = time.time()
     part_3_seconds_before = time.time()
     # the_scraper_movie.parallel_movie_scraper()
@@ -326,9 +370,10 @@ def main():
     print(f"part game time :{part_2_seconds_after - part_2_seconds_before}")
     print(f"part movie time :{part_3_seconds_after - part_3_seconds_before}")
     print(f"part total time :{part_4_seconds_after - part_4_seconds_before}")
+    # print(the_scraper_movie.get_container())
+    # print(the_scraper_game.get_container())
+    # print(the_scraper_tv.get_container())
 
 
 if __name__ == '__main__':
     main()
-
-
