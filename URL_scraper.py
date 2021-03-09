@@ -48,7 +48,6 @@ class Scraper:
         self.items_url_length = len(self.url_list)
         # self.parallel_page_scraper()
 
-
     def get_type(self):
         """
         Returns type of Scraper (Movies, Tv Shows, Games)
