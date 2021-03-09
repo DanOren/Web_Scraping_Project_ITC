@@ -7,6 +7,7 @@ import logging
 import sys
 import re
 import pandas as pd
+import numpy as np
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -47,6 +48,7 @@ class Scraper:
         self.items_url_length = len(self.url_list)
         # self.parallel_page_scraper()
 
+
     def get_type(self):
         """
         Returns type of Scraper (Movies, Tv Shows, Games)
@@ -68,6 +70,13 @@ class Scraper:
         :return:
         """
         return self.container.shape[0]
+
+    def replace_nan_with_null(self):
+        """
+        takes care of NAN Values due to MYSQL probelm with nan values
+        :return: container
+        """
+        self.container = self.container.replace(np.nan, None, regex=True)
 
     def create_container(self):
         """
