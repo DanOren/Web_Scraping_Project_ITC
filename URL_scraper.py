@@ -196,6 +196,7 @@ class Scraper:
             except AttributeError:
                 logging.error(f'Unable to send batch to scrape.')
                 continue
+            print(self.container)
             logging.info(f'Scraping a batch of item urls.')
 
     def parallel_tv_show_scraper(self):

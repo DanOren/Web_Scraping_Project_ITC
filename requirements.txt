@@ -9,6 +9,7 @@ grequests==0.6.0
 idna==2.10
 lxml==4.6.2
 pycparser==2.20
+PyMySQL==1.0.2
 requests==2.25.1
 soupsieve==2.2
 urllib3==1.26.3
