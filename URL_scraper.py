@@ -58,7 +58,7 @@ class Scraper:
 
     def get_container(self):
         """
-        Rturens the Dataframe
+        Returns the Dataframe
         :return: Pandas Dataframe
         """
         return self.container
@@ -72,7 +72,7 @@ class Scraper:
 
     def replace_nan_with_null(self):
         """
-        takes care of NAN Values due to MYSQL probelm with nan values
+        takes care of NAN Values due to MYSQL problem with nan values
         :return: container
         """
         self.container = self.container.replace(np.nan, None, regex=True)
