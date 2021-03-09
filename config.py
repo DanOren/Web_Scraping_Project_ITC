@@ -9,5 +9,6 @@ EXAMPLE_WEB_PAGE_TV_SHOWS = 'https://www.metacritic.com/browse/tv/score/metascor
 FILM_NAME_WITHOUT_YEAR = 0
 BATCH_SIZE = 5
 USER_AGENT = {'User-agent': 'Mozilla/5.0'}
-DATABASE_NAME = 'METACRITIC_DB'
+DATABASE_NAME = 'metacritic'
 PASSWORD_DB_SERVER = 'password'
+SIZE_OF_COMMIT = 100
