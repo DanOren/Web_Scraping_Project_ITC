@@ -44,6 +44,7 @@ class Database:
         self.con, self.cur = self.connect_to_db()
         # self.con, self.cur updated after DB confirmed/created
         self.con, self.cur = self.create_db()
+        self.create_tables_db()
 
     def connect_to_db(self):
         """
@@ -68,6 +69,7 @@ class Database:
         con = pymysql.connect(host='localhost', user='root', password=cfg.PASSWORD_DB_SERVER,
                               database=self.db_name, cursorclass=pymysql.cursors.DictCursor)
         cur = con.cursor()
+
         return con, cur
 
     def create_tables_db(self):
@@ -216,7 +218,6 @@ class Database:
         :param container: Dictionary
         :return: None
         """
-        print(len(container))
         counter = 0
         for index, row_df in container.iterrows():
             # print(row_df)

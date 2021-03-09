@@ -48,13 +48,16 @@ class Scraper:
         self.items_url_length = len(self.url_list)
         # self.parallel_page_scraper()
 
+        self.replace_nan_with_null()
+
+
     def get_type(self):
         """
         Returns type of Scraper (Movies, Tv Shows, Games)
         :return: Scraper type
         """
         logging.info(f'Scrapper type is {self.type}')
-        return self.type
+        return str(self.type)
 
     def get_container(self):
         """
@@ -75,7 +78,7 @@ class Scraper:
         takes care of NAN Values due to MYSQL problem with nan values
         :return: container
         """
-        self.container = self.container.replace(np.nan, None, regex=True)
+        self.container = self.container.replace(np.nan, 'missing_value', regex=True)
 
     def create_container(self):
         """

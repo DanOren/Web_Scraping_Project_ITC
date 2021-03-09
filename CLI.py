@@ -2,6 +2,7 @@ import argparse
 import URL_scraper as sc
 import config as cfg
 import sys
+import DB as db
 parser = argparse.ArgumentParser(description='Welcome to Metacritic scraper, Please enter 3 parameters,'
                                              'Which type of data to scrape, by what method to scrape it by,'
                                              'and the parameter to scrape by.')
@@ -26,6 +27,9 @@ def movie(how_to_scrape, val_to_scrape):
         url = f'https://www.metacritic.com/browse/movies/genre/metascore/{val_to_scrape}?view=detailed'
     the_scraper = sc.Scraper(url)
     the_scraper.parallel_movie_scraper()
+    the_scraper.replace_nan_with_null()
+    data = db.Database()
+    data.add_to_database_by_type(container=the_scraper.get_container(), container_type=the_scraper.get_type())
 
 
 def tv_show(how_to_scrape, val_to_scrape):

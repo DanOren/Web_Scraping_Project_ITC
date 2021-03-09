@@ -15,7 +15,7 @@ BATCH_SIZE = 5
 USER_AGENT = {'User-agent': 'Mozilla/5.0'}
 DATABASE_NAME = 'metacritic'
 PASSWORD_DB_SERVER = 'password'
-SIZE_OF_COMMIT = 100
+SIZE_OF_COMMIT = 1
 GENRE_LIST = ['action', 'adventure', 'animation', 'biography', 'comedy', 'crime', 'documentary', 'drama', 'family',
               'fantasy', 'film-nior', 'history', 'horror', 'music', 'musical', 'mystery', 'news', 'reality-tv',
               'romance', 'sci-fi', 'short', 'sport', 'thriller', 'war', 'western']
