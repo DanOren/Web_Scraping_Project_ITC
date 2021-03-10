@@ -38,4 +38,6 @@ python3 CLI.py games year 2002
 python3 CLI.py tv genre action
 ```
 
+## Database
+![Test Image 6](master/ERD_scraping_4.pdf)
 ###### by Ari and Dan
