@@ -29,9 +29,9 @@ logger.addHandler(stream_handler)
 
 class Scraper:
     def __init__(self, anchor_url):
-        # Container of all the data from scraping
+        # Container of all the data from scraping.
         self.container = pd.DataFrame()
-        # Type of Scaper (Movie, Tv show, Games)
+        # Type of craper (Movie, Tv show, Games).
         self.type = re.findall(r'/browse/(.+?)/', anchor_url)[0]
         self.get_type()
         self.create_container()
@@ -39,7 +39,7 @@ class Scraper:
         self.index_url_list = []
         # URLs from each index page. These are the items that will be scraped.
         self.url_list = []
-        # Methods for initialisation of the scraper
+        # Methods for initialisation of the scraper.
         # Creates the list of index pages needed to get item URLs.
         self.get_index_pages_urls_list(anchor_url)
         self.index_url_length = len(self.index_url_list)
@@ -47,7 +47,7 @@ class Scraper:
         self.get_item_urls_list()
         self.items_url_length = len(self.url_list)
         # self.parallel_page_scraper()
-
+        # Replaces nan's with nulls in preparation for database insertion.
         self.replace_nan_with_null()
 
 
@@ -68,29 +68,29 @@ class Scraper:
 
     def get_container_num_of_rows(self):
         """
-        return amount of rows in dataframe
-        :return:
+        Returns amount of rows in dataframe
+        :return: Integer
         """
         return self.container.shape[0]
 
     def replace_nan_with_null(self):
         """
-        takes care of NAN Values due to MYSQL problem with nan values
+        Takes care of Nan Values due to MYSQL problem with Nan values.
         :return: container
         """
         self.container = self.container.replace(np.nan, 'missing_value', regex=True)
 
     def create_container(self):
         """
-        create a Pandas Dataframe according to the columns for each type of scraper (Movies, Tv Shows, Games)
-        :return:
+        Create a Pandas Dataframe according to the columns for each type of scraper (Movies, Tv Shows, Games)
+        :return: pd DataDrame
         """
         if self.type == 'movies':
             self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
                                                    'Director', 'Rating', 'Genres', 'Runtime', 'Summary'])
         elif self.type == 'tv':
             self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
-                                                   'Creator', 'Genres', 'Starring', 'Summary'])
+                                                   'Creator', 'Genres', 'Summary'])
         elif self.type == 'games':
             self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
                                                    'Platform', 'Genres', 'Rating', 'Summary'])
@@ -107,17 +107,19 @@ class Scraper:
             logging.critical(f'Incorrect anchor url to scrape.')
             sys.exit(1)
         soup = BeautifulSoup(source, 'lxml')
-        # Loops through each item on the index page and extracts the url of the item into a list.
+        # Loops through each branched index page item on the index page and
+        # extracts the url of the item into a list.
         try:
             self.index_url_list.append(input_url)
-            if soup.find('li', class_='page last_page') is not None:  # Check if there are more then 1 page in a anchor
+            # Check if there are more than 1 page in an anchor.
+            if soup.find('li', class_='page last_page') is not None:
                 num_of_pages = int(soup.find('li', class_='page last_page').find('a', class_='page_num').text)
                 for page_num in range(1, num_of_pages):
                     # Every url extracted is relative to the main anchor page
                     url_number = '&page=' + str(page_num)
                     self.index_url_list.append(input_url + url_number)
         except IOError:
-            logging.critical(f'Unable created a list of the index pages urls.')
+            logging.critical(f'Unable to create a list of the index pages urls.')
         logging.info(f'There are {len(self.index_url_list)} anchor pages to scrape')
         logging.info(f'Successfully created a list of the index pages urls.')
 
@@ -137,18 +139,18 @@ class Scraper:
             list_of_names = []  # This is mostly for games due to multi-platforms.
             try:
                 for article in soup.find_all('a', class_='title', href=True):
-                    # Every url extracted is relative - without the main page
+                    # Every url extracted is relative - without the main page.
                     if article.text not in list_of_names:
                         self.url_list.append(cfg.MAIN_WEB_PAGE + article['href'])
                         list_of_names.append(article.text)
             except IOError:
                 logging.critical(f'Unable to create url list to scrape, from this index page.')
-        logging.info(f'there are {len(self.url_list)} items to scrape')
+        logging.info(f'There are {len(self.url_list)} items to scrape')
         logging.debug(f'Successfully created list of urls for items to scrape.')
 
     def debug_concurrent_page_scraping(self):
         """
-        calls the debug_data_scraper method and scrapes each page one at a time.
+        Calls the debug_data_scraper method and scrapes each page one at a time.
         :return:
         """
         for index, url in enumerate(self.url_list):
@@ -197,7 +199,7 @@ class Scraper:
             item_series.name = unique_identifier
             self.container = self.container.append(item_series)
         except IOError:
-            logging.error(f'unable to find page to scrape url incorrect!')
+            logging.error(f'Unable to find page to scrape url incorrect!')
 
     def parallel_movie_scraper(self):
         """
@@ -230,7 +232,7 @@ class Scraper:
                     item_info['Director'] = list(list(director.children)[3].children)[0].text
                 genre_list = []
                 for index, genre in enumerate(soup.find('div', class_='genres').find_all('span')):
-                    if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
+                    if index != 0 and index != 1:  # this returns only a list of the genres of each movies
                         genre_list.append(genre.text.strip())
                 item_info['Genres'] = genre_list
                 for rating in soup.find_all('div', class_='rating', limit=1):
@@ -284,11 +286,6 @@ class Scraper:
                     if index != 0 and index != 1:  # this returns only a list of the genres of each tv show
                         genre_list.append(genre.text.strip())
                 item_info['Genres'] = genre_list
-                starring_list = []
-                for index, starring in enumerate(soup.find_all('div', class_='summary_cast details_section')):
-                    for name in starring.find_all('a'):
-                        starring_list.append(name.text.strip())
-                item_info['Starring'] = starring_list
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
                     item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
@@ -299,6 +296,8 @@ class Scraper:
                 logging.error(f'Unable send batch to scrape.')
                 continue
             logging.debug(f'Scraping a batch of urls.')
+
+
 
     def parallel_game_scraper(self):
         """
@@ -359,7 +358,7 @@ class Scraper:
                 logging.error(f'unable send batch to scrape')
                 continue
             logging.debug(f'scraping a batch of urls')
-
+        return self.container
 
 def main():
     # the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
