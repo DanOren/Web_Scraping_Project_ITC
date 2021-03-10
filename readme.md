@@ -39,5 +39,5 @@ python3 CLI.py tv genre action
 ```
 
 ## Database
-![Test Image 6](https://github.com/DanOren/Web_Scraping_Project_ITC/blob/main/ERD_scraping_4.jpeg)
+![Test Image 6](https://github.com/DanOren/Web_Scraping_Project_ITC/blob/main/ERD_metacritic.jpeg?raw=true)
 ###### by Ari and Dan
