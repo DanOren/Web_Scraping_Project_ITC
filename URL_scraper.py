@@ -50,7 +50,6 @@ class Scraper:
         # Replaces nan's with nulls in preparation for database insertion.
         self.replace_nan_with_null()
 
-
     def get_type(self):
         """
         Returns type of Scraper (Movies, Tv Shows, Games)
@@ -297,8 +296,6 @@ class Scraper:
                 continue
             logging.debug(f'Scraping a batch of urls.')
 
-
-
     def parallel_game_scraper(self):
         """
         For each url in self.url_list, this method extracts all info
@@ -358,6 +355,7 @@ class Scraper:
                 logging.error(f'unable send batch to scrape')
                 continue
             logging.debug(f'scraping a batch of urls')
+
 
 def main():
     # the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)

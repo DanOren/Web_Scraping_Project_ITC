@@ -14,6 +14,7 @@ FILM_NAME_WITHOUT_YEAR = 0
 BATCH_SIZE = 5
 USER_AGENT = {'User-agent': 'Mozilla/5.0'}
 DATABASE_NAME = 'metacritic'
+USER_DB = 'root'
 PASSWORD_DB_SERVER = 'password'
 SIZE_OF_COMMIT = 1
 GENRE_LIST = ['action', 'adventure', 'animation', 'biography', 'comedy', 'crime', 'documentary', 'drama', 'family',
