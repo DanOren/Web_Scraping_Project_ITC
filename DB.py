@@ -5,8 +5,7 @@ import sys
 import re
 import pandas as pd
 import numpy as np
-import URL_scraper as sc
-import CLI as cl
+
 
 
 logger = logging.getLogger()
@@ -204,10 +203,10 @@ class Database:
             self.populate_tables_movies(container)
             logging.info(f'Finished populating new container to database.')
         elif container_type == 'tv':
-            self.populate_tables_movies(container)
+            self.populate_tables_tv_shows(container)
             logging.info(f'Finished populating new container to database.')
         elif container_type == 'games':
-            self.populate_tables_movies(container)
+            self.populate_tables_games(container)
             logging.info(f'Finished populating new container to database.')
         else:
             logging.error(f'Failed to add to database.')
@@ -242,7 +241,7 @@ class Database:
                 # If studio not in studio table, insert it and then select the id to use for movies FK.
                 self.cur.execute(f"""INSERT INTO studios (name) VALUES ("{row_df['Studio']}");""")
                 self.cur.execute(f"""SELECT id AS id FROM studios WHERE name="{row_df['Studio']}";""")
-                studio_id_query = self.cur.fetchone()
+                studio_existence_query = self.cur.fetchone()
                 studio_id = studio_existence_query['id']
             else:
                 studio_id = studio_existence_query['id']
@@ -251,7 +250,7 @@ class Database:
             if director_existence_query is None:
                 self.cur.execute(f"""INSERT INTO directors (name) VALUES ("{row_df['Director']}");""")
                 self.cur.execute(f"""SELECT id AS id FROM directors WHERE name="{row_df['Director']}";""")
-                director_id_query = self.cur.fetchone()
+                director_existence_query = self.cur.fetchone()
                 director_id = director_existence_query['id']
             else:
                 director_id = director_existence_query['id']
@@ -283,8 +282,8 @@ class Database:
             counter += 1
             # if counter % cfg.SIZE_OF_COMMIT == 0 or counter == len(container) - 1:
             self.con.commit()
-            logging.info(f'Commit of {cfg.SIZE_OF_COMMIT} entries')
-            logging.info(f'Item {unique_identifier} entries')
+            logging.debug(f'Commit of {cfg.SIZE_OF_COMMIT} entries')
+            logging.debug(f'Item {unique_identifier} entries')
 
     def populate_tables_tv_shows(self, container):
         """
@@ -329,7 +328,7 @@ class Database:
                 creator_id = creator_existence_query['id']
             else:
                 creator_id = creator_existence_query['id']
-            sql_to_execute = fr"""INSERT INTO tv_shows (name, unique_identifier, meta_score, user_score, release_year,
+            sql_to_execute = fr"""INSERT INTO tv_shows (name, unique_identifier, meta_score, user_score, release_date,
                                 summary, studio_id, creator_id) 
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"""
             # print(sql_to_execute)
@@ -357,8 +356,8 @@ class Database:
             counter += 1
             # if counter % cfg.SIZE_OF_COMMIT == 0 or counter == len(container) - 1:
             self.con.commit()
-            logging.info(f'Commit of {cfg.SIZE_OF_COMMIT} entries')
-            logging.info(f'Item {unique_identifier} entries')
+            logging.debug(f'Commit of {cfg.SIZE_OF_COMMIT} entries')
+            logging.debug(f'Item {unique_identifier} entries')
 
 
     def populate_tables_games(self, container):
@@ -432,30 +431,30 @@ class Database:
                 else:
                     platform_id = platform_id_query['id']
                 # Insert this game, platform combination into games_platforms table
-                self.cur.execute(f"""INSERT INTO movies_platforms (game_id, platform_id) VALUES ({game_id}, {platform_id});""")
+                self.cur.execute(f"""INSERT INTO games_platforms (game_id, platform_id) VALUES ({game_id}, {platform_id});""")
             counter += 1
             # if counter % cfg.SIZE_OF_COMMIT == 0 or counter == len(container) - 1:
             self.con.commit()
-            logging.info(f'Commit of {cfg.SIZE_OF_COMMIT} entries')
-            logging.info(f'Item {unique_identifier} entries')
+            logging.debug(f'Commit of {cfg.SIZE_OF_COMMIT} entries')
+            logging.debug(f'Item {unique_identifier} entries')
 
 
 
-# def main():
-# df_tv_shows = cl.tv_show('year', '2002')
-# print(df_tv_shows.columns)
-# db1.populate_tables_tv_shows(df_tv_shows)
-df_game = cl.game('year', '1996')
-df_game = df_game.replace(np.nan, None, regex=True)
-db1 = Database()
-assert db1.db_name == 'metacritic'
-db1.connect_to_db()
-db1.create_db()
-db1.create_tables_db()
-db1.populate_tables_games(df_game)
-print(db1.db_name)
+def main():
+    # df_tv_shows = cl.tv_show('year', '2002')
+    # print(df_tv_shows.columns)
+    # db1.populate_tables_tv_shows(df_tv_shows)
+    # df_game = cl.game('year', '1996')
+    # df_game = df_game.replace(np.nan, "missing", regex=True)
+    db1 = Database()
+    assert db1.db_name == 'metacritic'
+    db1.connect_to_db()
+    db1.create_db()
+    db1.create_tables_db()
+    db1.populate_tables_games(df_game)
+    print(db1.db_name)
 
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()

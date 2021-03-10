@@ -358,7 +358,6 @@ class Scraper:
                 logging.error(f'unable send batch to scrape')
                 continue
             logging.debug(f'scraping a batch of urls')
-        return self.container
 
 def main():
     # the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)

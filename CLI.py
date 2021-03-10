@@ -2,7 +2,7 @@ import argparse
 import URL_scraper as sc
 import config as cfg
 import sys
-# import DB as db
+import DB as db
 parser = argparse.ArgumentParser(description='Welcome to Metacritic scraper. Please enter 3 parameters: '
                                              '1. Which type of data to scrape, '
                                              '2. What method to scrape it by, '
@@ -60,12 +60,10 @@ def game(how_to_scrape, val_to_scrape):
     elif how_to_scrape == 'genre':
         url = f'https://www.metacritic.com/browse/games/genre/metascore/{val_to_scrape}/all?view=detailed'
     the_scraper = sc.Scraper(url)
-    df = the_scraper.parallel_game_scraper()
-    return df
-    # the_scraper.parallel_game_scraper()
-    # the_scraper.replace_nan_with_null()
-    # data = db.Database()
-    # data.add_to_database_by_type(container=the_scraper.get_container(), container_type=the_scraper.get_type())
+    the_scraper.parallel_game_scraper()
+    the_scraper.replace_nan_with_null()
+    data = db.Database()
+    data.add_to_database_by_type(container=the_scraper.get_container(), container_type=the_scraper.get_type())
 
 
 commands = {
