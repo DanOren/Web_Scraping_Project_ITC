@@ -9,7 +9,7 @@ EXAMPLE_WEB_PAGE_TV_SHOWS = 'https://www.metacritic.com/browse/tv/score/metascor
 EXAMPLE_WEB_PAGE_GAMES_2 = 'https://www.metacritic.com/browse/games/score/metascore/year/all/filtered?' \
                            'year_selected=2001&distribution=&sort=desc&view=detailed'
 EXAMPLE_WEB_PAGE_MOVIE_2 = 'https://www.metacritic.com/browse/movies/score/metascore/year' \
-                   '/filtered?year_selected=1925&sort=desc&view=detailed'
+                   '/filtered?year_selected=1965&sort=desc&view=detailed'
 FILM_NAME_WITHOUT_YEAR = 0
 BATCH_SIZE = 5
 USER_AGENT = {'User-agent': 'Mozilla/5.0'}

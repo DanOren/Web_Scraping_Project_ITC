@@ -8,6 +8,7 @@ import sys
 import re
 import pandas as pd
 import numpy as np
+import wikipediaapi
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -49,6 +50,7 @@ class Scraper:
         # self.parallel_page_scraper()
         # Replaces nan's with nulls in preparation for database insertion.
         self.replace_nan_with_null()
+
 
     def get_type(self):
         """
@@ -248,6 +250,7 @@ class Scraper:
                 logging.error(f'Unable to send batch to scrape.')
                 continue
             logging.debug(f'Scraping a batch of item urls.')
+        self.add_wiki_url_page()
 
     def parallel_tv_show_scraper(self):
         """
@@ -295,6 +298,7 @@ class Scraper:
                 logging.error(f'Unable send batch to scrape.')
                 continue
             logging.debug(f'Scraping a batch of urls.')
+        self.add_wiki_url_page()
 
     def parallel_game_scraper(self):
         """
@@ -355,19 +359,37 @@ class Scraper:
                 logging.error(f'unable send batch to scrape')
                 continue
             logging.debug(f'scraping a batch of urls')
+        self.add_wiki_url_page()
+
+    def add_wiki_url_page(self):
+        wiki_wiki = wikipediaapi.Wikipedia('en')
+
+        for index, row_df in self.container.iterrows():
+            if self.get_type() == 'tv':
+                name = row_df['Title'].split(': Season')[0]
+                # print(name)
+            else:
+                name = row_df['Title'].replace(' ', '_')
+            page_py = wiki_wiki.page(name)
+            if page_py.exists():
+                self.container.loc[index, 'wiki_url'] = page_py.canonicalurl
+            else:
+                self.container.loc[index, 'wiki_url'] = f'No URL Found'
+            print(name)
 
 
 def main():
-    # the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
+    the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
     # the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
-    the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE_2)
-    the_scraper_movie.debug_concurrent_page_scraping()
+    # the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE_2)
+    # the_scraper_movie.debug_concurrent_page_scraping()
+
     part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
     # the_scraper_tv.parallel_tv_show_scraper()
     part_1_seconds_after = time.time()
     part_2_seconds_before = time.time()
-    # the_scraper_game.parallel_game_scraper()
+    the_scraper_game.parallel_game_scraper()
     part_2_seconds_after = time.time()
     part_3_seconds_before = time.time()
     # the_scraper_movie.parallel_movie_scraper()
@@ -378,7 +400,7 @@ def main():
     print(f"part movie time :{part_3_seconds_after - part_3_seconds_before}")
     print(f"part total time :{part_4_seconds_after - part_4_seconds_before}")
     # print(the_scraper_movie.get_container())
-    # print(the_scraper_game.get_container())
+    print(the_scraper_game.get_container())
     # print(the_scraper_tv.get_container())
 
 

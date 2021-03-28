@@ -9,11 +9,11 @@ parser = argparse.ArgumentParser(description='Welcome to Metacritic scraper. Ple
                                              '2. What method to scrape it by, '
                                              '3. The parameter to scrape by. ')
 parser.add_argument('type_to_scrape', nargs='?', type=str,
-                    help='movies, tv_shows or games', default=None)
+                    help='movies, tv_shows or games', default='movies')
 parser.add_argument('how_to_scrape', nargs='?', type=str,
-                    help='Scrape by year or genre', default=None)
+                    help='Scrape by year or genre', default='year')
 parser.add_argument('val_to_scrape', nargs='?', type=str,
-                    help='Value to scrape by', default=None)
+                    help='Value to scrape by', default='1927')
 args, unknown = parser.parse_known_args()
 
 
