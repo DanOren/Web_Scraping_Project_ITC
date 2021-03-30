@@ -52,6 +52,7 @@ class Scraper:
         self.replace_nan_with_null()
 
 
+
     def get_type(self):
         """
         Returns type of Scraper (Movies, Tv Shows, Games)

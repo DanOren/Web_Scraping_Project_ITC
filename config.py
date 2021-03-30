@@ -18,5 +18,5 @@ USER_DB = 'root'
 PASSWORD_DB_SERVER = 'password'
 SIZE_OF_COMMIT = 1
 GENRE_LIST = ['action', 'adventure', 'animation', 'biography', 'comedy', 'crime', 'documentary', 'drama', 'family',
-              'fantasy', 'film-nior', 'history', 'horror', 'music', 'musical', 'mystery', 'news', 'reality-tv',
+              'fantasy', 'film-noir', 'history', 'horror', 'music', 'musical', 'mystery', 'news', 'reality-tv',
               'romance', 'sci-fi', 'short', 'sport', 'thriller', 'war', 'western']
