@@ -1,8 +1,8 @@
 import argparse
-import URL_scraper as sc
+import URL_scraper as Scraper
 import config as cfg
 import sys
-import DB as db
+import DB as DB
 
 parser = argparse.ArgumentParser(description='Welcome to Metacritic scraper. Please enter 3 parameters: '
                                              '1. Which type of data to scrape, '
@@ -27,10 +27,10 @@ def movie(how_to_scrape, val_to_scrape):
               f"year_selected={val_to_scrape}&sort=desc&view=detailed"
     elif how_to_scrape == 'genre':
         url = f'https://www.metacritic.com/browse/movies/genre/metascore/{val_to_scrape}?view=detailed'
-    the_scraper = sc.Scraper(url)
+    the_scraper = Scraper.Scraper(url)
     the_scraper.parallel_movie_scraper()
     the_scraper.replace_nan_with_null()
-    data = db.Database()
+    data = DB.Database()
     data.add_to_database_by_type(container=the_scraper.get_container(), container_type=the_scraper.get_type())
 
 
@@ -44,10 +44,10 @@ def tv_show(how_to_scrape, val_to_scrape):
               f'year_selected={val_to_scrape}&sort=desc&view=detailed'
     elif how_to_scrape == 'genre':
         url = f'https://www.metacritic.com/browse/tv/genre/metascore/{val_to_scrape}?view=detailed'
-    the_scraper = sc.Scraper(url)
+    the_scraper = Scraper.Scraper(url)
     the_scraper.parallel_tv_show_scraper()
     the_scraper.replace_nan_with_null()
-    data = db.Database()
+    data = DB.Database()
     data.add_to_database_by_type(container=the_scraper.get_container(), container_type=the_scraper.get_type())
 
 
@@ -61,10 +61,10 @@ def game(how_to_scrape, val_to_scrape):
               f'year_selected={val_to_scrape}&distribution=&sort=desc&view=detailed'
     elif how_to_scrape == 'genre':
         url = f'https://www.metacritic.com/browse/games/genre/metascore/{val_to_scrape}/all?view=detailed'
-    the_scraper = sc.Scraper(url)
+    the_scraper = Scraper.Scraper(url)
     the_scraper.parallel_game_scraper()
     the_scraper.replace_nan_with_null()
-    data = db.Database()
+    data = DB.Database()
     data.add_to_database_by_type(container=the_scraper.get_container(), container_type=the_scraper.get_type())
 
 

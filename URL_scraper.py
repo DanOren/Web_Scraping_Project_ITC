@@ -32,7 +32,7 @@ class Scraper:
     def __init__(self, anchor_url):
         # Container of all the data from scraping.
         self.container = pd.DataFrame()
-        # Type of craper (Movie, Tv show, Games).
+        # Type of scraper (Movie, Tv show, Games).
         self.type = re.findall(r'/browse/(.+?)/', anchor_url)[0]
         self.get_type()
         self.create_container()
@@ -50,8 +50,6 @@ class Scraper:
         # self.parallel_page_scraper()
         # Replaces nan's with nulls in preparation for database insertion.
         self.replace_nan_with_null()
-
-
 
     def get_type(self):
         """
@@ -85,7 +83,7 @@ class Scraper:
     def create_container(self):
         """
         Create a Pandas Dataframe according to the columns for each type of scraper (Movies, Tv Shows, Games)
-        :return: pd DataDrame
+        :return: pd DataFrame
         """
         if self.type == 'movies':
             self.container = pd.DataFrame(columns=['Title', 'Metascore', 'User score', 'Release Year', 'Studio',
@@ -373,10 +371,9 @@ class Scraper:
                 name = row_df['Title'].replace(' ', '_')
             page_py = wiki_wiki.page(name)
             if page_py.exists():
-                self.container.loc[index, 'wiki_url'] = page_py.canonicalurl
+                self.container.loc[index, 'wiki_url'] = page_py.fullurl
             else:
                 self.container.loc[index, 'wiki_url'] = f'No URL Found'
-            print(name)
 
 
 def main():
