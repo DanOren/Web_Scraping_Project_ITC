@@ -5,14 +5,13 @@
 
 This program scrapers data about Movies, Tv Shows and Games from the website
 [www.metacritic.com](https://www.metacritic.com/)
-
+The Data that is being scraped from Metacritc varies a little per type, If its a movie/Tv Show/Game but it mostly scrapes the name of the item, the metascores, release date, and more.
+Furthermore Each item now also gets its Wikipedia page from the wikipediaapi.
 ### Features
 
 - The program runs from a CLI, and you can specifiy what Data to scrape.(Movies, Tv Shows, Games)
 - filter each scrape by Year or by Genre.
-- 
-- Drag and drop markdown and HTML files into Dillinger
-- Export documents as Markdown, HTML and PDF
+
 ### Data
 - Meta Score by critics and by users.
 - Release Date
@@ -44,61 +43,49 @@ python3 CLI.py tv genre action
 **games:**
 **Table to house each game object**
 - id – INT: unique identifier for a game
-- name – VARCHAR: the name of the game
 - unique_identifier - VARCHAR: the unique identifier used in the python script – it is ‘name’ +’_’ + ‘release_date’
-- meta_score – VARCHAR – the Metascore for the game
-- user_score – VARCHAR: the average user rating for the game
-- release_date – VARCHAR: the release date of the game
-- rating – VARCHAR: the parental rating for the game
-- summary – VARCHAR: the summary of the game
+- meta_score – INT: foreign key from frequent table
+- user_score – INT: foreign key from frequent table
+- rating – INT: foreign key from frequent table
 - studio_id – INT: foreign key from studios table
 
 **tv_shows:**
 **Table to house each tv_show object**
 - id – INT: unique identifier for a tv_show
-- name – VARCHAR: the name of the tv_show
 - unique_identifier - VARCHAR: the unique identifier used in the python script – it is ‘name’ +’_’ + ‘release_date’
-- meta_score – VARCHAR – the Metascore for the tv_show
-- user_score – VARCHAR: the average user rating for the tv_show
-- release_date – VARCHAR: the release date of the tv_show
-- summary – VARCHAR: the summary of the tv_show
+- meta_score – INT: foreign key from frequent table
+- user_score – INT: foreign key from frequent table
 - platform_id – INT: foreign key from platforms table
 - studio_id – INT: foreign key from studios table
 - creator_id – INT: foreign key from creators table
+- frequent_id – INT: foreign key from frequent table
 
 **movies:**
 **Table to house each movie object**
 - id – INT: unique identifier for a movie
-- name – VARCHAR: the name of the movie
 - unique_identifier - VARCHAR: the unique identifier used in the python script – it is ‘name’ +’_’ + ‘release_date’
-- meta_score – VARCHAR – the Metascore for the movie
-- user_score – VARCHAR: the average user rating for the movie
-- release_year – VARCHAR: the release year of the movie
-- rating – VARCHAR: the parental rating for the movie
-- runtime – VARCHAR: the runtime of the movie, in minutes
-- summary – VARCHAR: the summary of the movie
+- meta_score – INT: foreign key from frequent table
+- user_score – INT: foreign key from frequent table
+- rating – INT: foreign key from frequent table
 - studio_id– INT: foreign key from studios table
 - director_id– INT: foreign key from directors table
+- frequent_id – INT: foreign key from frequent table
 
 **studios:**
 **Table to house each studio, for each games, tv_shows and movies**
 - id – INT: unique identifier for a studio
-- name – VARCHAR: the name of the studio
 
 **creators:**
 **Table to house each platform for creators for tv_shows**
 - id – INT: unique identifier for a creator
-- name – VARCHAR: the name of the creator
 
 **directors:**
 **Table to house each director**
 - id – INT: unique identifier for a director
-- name – VARCHAR: the name of the director
 
 **genres:**
 **Table to house each genre that games, tv_shows and movies can be classified as**
 - id – INT: unique identifier for a genre
-- name – VARCHAR: the name of the genre
 
 **games_genres:**
 **Associative table to house the id and genre id that each game is classified as**
@@ -121,11 +108,15 @@ python3 CLI.py tv genre action
 **platforms:**
 **Table to house each platform that a game has been released on e.g. PS, PC**
 - id – INT: unique identifier for a platform
-- name – VARCHAR: the name of the platform
 
 **games_platforms:**
 **Associative table to house the id and platform id that each game has been released on**
 - id – INT: unique identifier for games_platforms entry
 - game_id – INT: foreign key from games table
 - platform_id – INT: foreign key from platforms table
+
+**frequent:**
+**Table to house each frequently changed data**
+- id – INT: unique identifier for a frequent
+
 ###### by Ari and Dan
