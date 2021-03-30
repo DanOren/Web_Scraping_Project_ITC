@@ -77,7 +77,8 @@ class Database:
         try:
             self.cur.execute("""CREATE TABLE IF NOT EXISTS frequent (
                             id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
-                            rating varchar(255),
+                            meta_score varchar(255),
+                            user_score varchar(255),
                             wiki_url varchar(1000)
                             );""")
             logging.info(f'studios table functioning.')
@@ -146,9 +147,8 @@ class Database:
                             id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
                             title varchar(255) NOT NULL,
                             unique_identifier varchar(500) NOT NULL,
-                            meta_score varchar(255),
-                            user_score varchar(255),
                             release_year varchar(255),
+                            rating varchar(255),
                             runtime varchar(255),
                             summary varchar(10000),
                             studio_id int,
@@ -183,8 +183,6 @@ class Database:
                             id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
                             title varchar(255) NOT NULL,
                             unique_identifier varchar(255) NOT NULL,
-                            meta_score varchar(255),
-                            user_score varchar(255),
                             release_date varchar(255),
                             summary varchar(10000),
                             studio_id int,
@@ -219,9 +217,8 @@ class Database:
                             id int PRIMARY KEY NOT NULL AUTO_INCREMENT,
                             title varchar(255) NOT NULL,
                             unique_identifier varchar(255) NOT NULL,
-                            meta_score varchar(255),
-                            user_score varchar(255),
                             release_date varchar(255),
+                            rating varchar(255),
                             summary varchar(10000),
                             studio_id int,
                             frequent_id int,
@@ -302,7 +299,8 @@ class Database:
             if movie_existence_query:
                 movie_id = movie_existence_query['id']
                 # Get rating and wiki_url to check
-                self.cur.execute(f"""SELECT frequent_id, rating, wiki_url
+                self.cur.execute(f"""SELECT frequent_id, meta_score, user_score, 
+                                     wiki_url
                                      FROM movies LEFT JOIN frequent
                                      ON movies.frequent_id = frequent.id
                                      WHERE movies.id={movie_id};""")
@@ -311,15 +309,18 @@ class Database:
                 frequent_id = frequent_query_movies['frequent_id']
 
                 # If items in frequent table haven't changed, no need to update
-                if frequent_query_movies['rating'] == row_df['Rating'] and\
+                if frequent_query_movies['meta_score'] == row_df['Metascore'] and \
+                        frequent_query_movies['user_score'] == row_df['User score'] and\
                         frequent_query_movies['wiki_url'] == row_df['wiki_url']:
                     continue
                 else:
                     # Update items in frequent table
                     sql_to_execute_frequent = fr"""UPDATE frequent
-                                                    SET rating = %s,  wiki_url = %s
+                                                    SET meta_score = %s, user_score = %s,
+                                                    wiki_url = %s
                                                     WHERE id = %s;"""
-                    self.cur.execute(sql_to_execute_frequent, (row_df['Rating'], row_df['wiki_url'], frequent_id))
+                    self.cur.execute(sql_to_execute_frequent, (row_df['Metascore'], row_df['User score'],
+                                                               row_df['wiki_url'], frequent_id))
                     self.con.commit()
                     logging.info(f' frequent table updated for {unique_identifier} in {self.db_name}')
             else:
@@ -347,22 +348,22 @@ class Database:
                     director_id = director_existence_query['id']
 
                 # Insert into frequent table first, as movies table references frequent
-                sql_to_execute_frequent = fr"""INSERT INTO frequent (rating, wiki_url) 
-                                            VALUES (%s, %s);"""
-                self.cur.execute(sql_to_execute_frequent, (row_df['Rating'], row_df['wiki_url']))
+                sql_to_execute_frequent = fr"""INSERT INTO frequent (meta_score, user_score, wiki_url) 
+                                            VALUES (%s, %s, %s);"""
+                self.cur.execute(sql_to_execute_frequent, (row_df['Metascore'],
+                                                           row_df['User score'], row_df['wiki_url']))
                 # Get id from frequent table to use for movies table
                 self.cur.execute(f"""SELECT max(id) as id FROM frequent;""")
                 frequent_id_query = self.cur.fetchone()
                 frequent_id = frequent_id_query['id']
                 # sql for movies table
-                sql_to_execute_movies = fr"""INSERT INTO movies (title, unique_identifier, meta_score,\
-                                             user_score, release_year,runtime, summary, studio_id, \
+                sql_to_execute_movies = fr"""INSERT INTO movies (title, unique_identifier,  
+                                             release_year, rating, runtime, summary, studio_id,
                                              director_id, frequent_id) 
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);"""
                 # Insert record into movies table
-                self.cur.execute(sql_to_execute_movies, (row_df['Title'], unique_identifier, row_df['Metascore'],
-                                 row_df['User score'], row_df['Release Year'], row_df['Runtime'],
-                                 row_df['Summary'], studio_id, director_id, frequent_id))
+                self.cur.execute(sql_to_execute_movies, (row_df['Title'], unique_identifier, row_df['Release Year'], row_df['Rating'],
+                                                         row_df['Runtime'], row_df['Summary'], studio_id, director_id, frequent_id))
 
                 self.cur.execute(f"""SELECT id FROM movies WHERE unique_identifier="{unique_identifier}";""")
                 movie_id_query = self.cur.fetchone()
@@ -406,7 +407,8 @@ class Database:
             if tv_show_existence_query:
                 tv_show_id = tv_show_existence_query['id']
                 # Get rating and wiki_url to check
-                self.cur.execute(f"""SELECT frequent_id, rating, wiki_url
+                self.cur.execute(f"""SELECT frequent_id, meta_score, user_score, 
+                                     wiki_url
                                      FROM tv_shows LEFT JOIN frequent
                                      ON tv_shows.frequent_id = frequent.id
                                      WHERE tv_shows.id={tv_show_id};""")
@@ -414,14 +416,18 @@ class Database:
                 # Id in frequent table
                 frequent_id = frequent_query_tv_shows['frequent_id']
                 # If items in frequent table haven't changed, no need to update
-                if frequent_query_tv_shows['wiki_url'] == row_df['wiki_url']:
+                if frequent_query_tv_shows['meta_score'] == row_df['Metascore'] and \
+                        frequent_query_tv_shows['user_score'] == row_df['User score'] and \
+                        frequent_query_tv_shows['wiki_url'] == row_df['wiki_url']:
                     continue
                 else:
                     # Update items in frequent table
                     sql_to_execute_frequent = fr"""UPDATE frequent
-                                                    SET wiki_url = %s
+                                                    SET meta_score = %s, user_score = %s,
+                                                    wiki_url = %s
                                                     WHERE id = %s;"""
-                    self.cur.execute(sql_to_execute_frequent, (row_df['wiki_url'], frequent_id))
+                    self.cur.execute(sql_to_execute_frequent, (row_df['Metascore'], row_df['User score'],
+                                                               row_df['wiki_url'], frequent_id))
                     self.con.commit()
                     logging.info(f' frequent table updated for {unique_identifier} in {self.db_name}')
             else:
@@ -449,23 +455,23 @@ class Database:
                     creator_id = creator_existence_query['id']
 
                 # Insert into frequent table first, as tv_shows table references frequent
-                # tv_shows don't have rating for now
-                tv_shows_rating_constant = 'Null'
-                sql_to_execute_frequent = fr"""INSERT INTO frequent (rating, wiki_url) 
-                                                        VALUES (%s, %s);"""
-                self.cur.execute(sql_to_execute_frequent, (tv_shows_rating_constant, row_df['wiki_url']))
+                sql_to_execute_frequent = fr"""INSERT INTO frequent (meta_score, user_score, wiki_url) 
+                                                      VALUES (%s, %s, %s);"""
+                self.cur.execute(sql_to_execute_frequent, (row_df['Metascore'],
+                                                           row_df['User score'], row_df['wiki_url']))
                 # Get id from frequent table to use for tv_shows table
                 self.cur.execute(f"""SELECT max(id) as id FROM frequent;""")
                 frequent_id_query = self.cur.fetchone()
                 frequent_id = frequent_id_query['id']
                 # sql for tv_shows table
-                sql_to_execute = fr"""INSERT INTO tv_shows (title, unique_identifier, meta_score, \
-                                      user_score, release_date,
+                sql_to_execute = fr"""INSERT INTO tv_shows (title, unique_identifier, release_date,
                                       summary, studio_id, creator_id, frequent_id) 
-                                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);"""
-                self.cur.execute(sql_to_execute, (row_df['Title'], unique_identifier, row_df['Metascore'],
-                                 row_df['User score'], row_df['Release Year'], row_df['Summary'],
-                                 studio_id, creator_id, frequent_id))
+                                      VALUES (%s, %s, %s, %s, %s, %s, %s);"""
+                # Insert record into tv_shows table
+                self.cur.execute(sql_to_execute, (row_df['Title'], unique_identifier,
+                                                  row_df['Release Year'], row_df['Summary'],
+                                                  studio_id, creator_id, frequent_id))
+
                 self.cur.execute(f"""SELECT id FROM tv_shows WHERE unique_identifier="{unique_identifier}";""")
                 tv_show_query = self.cur.fetchone()
                 tv_show_id = tv_show_query['id']
@@ -509,24 +515,28 @@ class Database:
             if game_existence_query:
                 game_id = game_existence_query['id']
                 # Get rating and wiki_url to check
-                self.cur.execute(f"""SELECT frequent_id, rating, wiki_url
-                                     FROM games LEFT JOIN frequent
-                                     ON games.frequent_id = frequent.id
-                                     WHERE games.id={game_id};""")
+                self.cur.execute(f"""SELECT frequent_id, meta_score, user_score, 
+                                                   wiki_url
+                                                   FROM games LEFT JOIN frequent
+                                                   ON games.frequent_id = frequent.id
+                                                   WHERE games.id={game_id};""")
                 frequent_query_games = self.cur.fetchone()
                 # Id in frequent table
                 frequent_id = frequent_query_games['frequent_id']
 
                 # If items in frequent table haven't changed, no need to update
-                if frequent_query_games['rating'] == row_df['Rating'] and \
-                   frequent_query_games['wiki_url'] == row_df['wiki_url']:
+                if frequent_query_games['meta_score'] == row_df['Metascore'] and \
+                        frequent_query_games['user_score'] == row_df['User score'] and \
+                        frequent_query_games['wiki_url'] == row_df['wiki_url']:
                     continue
                 else:
                     # Update items in frequent table
                     sql_to_execute_frequent = fr"""UPDATE frequent
-                                                    SET rating = %s,  wiki_url = %s
+                                                    SET meta_score = %s, user_score = %s,
+                                                    wiki_url = %s
                                                     WHERE id = %s;"""
-                    self.cur.execute(sql_to_execute_frequent, (row_df['Rating'], row_df['wiki_url'], frequent_id))
+                    self.cur.execute(sql_to_execute_frequent, (row_df['Metascore'], row_df['User score'],
+                                                               row_df['wiki_url'], frequent_id))
                     self.con.commit()
                     logging.info(f' frequent table updated for {unique_identifier} in {self.db_name}')
             else:
@@ -544,20 +554,21 @@ class Database:
                     studio_id = studio_existence_query['id']
 
                 # Insert into frequent table first, as games table references frequent
-                sql_to_execute_frequent = fr"""INSERT INTO frequent (rating, wiki_url) 
-                                                        VALUES (%s, %s);"""
-                self.cur.execute(sql_to_execute_frequent, (row_df['Rating'], row_df['wiki_url']))
+                sql_to_execute_frequent = fr"""INSERT INTO frequent (meta_score, user_score, wiki_url) 
+                                                    VALUES (%s, %s, %s);"""
+                self.cur.execute(sql_to_execute_frequent, (row_df['Metascore'],
+                                                           row_df['User score'], row_df['wiki_url']))
                 # Get id from frequent table to use for games table
                 self.cur.execute(f"""SELECT max(id) as id FROM frequent;""")
                 frequent_id_query = self.cur.fetchone()
                 frequent_id = frequent_id_query['id']
                 # sql for games table
-                sql_to_execute_games = fr"""INSERT INTO games (title, unique_identifier,\
-                                            meta_score, user_score, release_date,
+                sql_to_execute_games = fr"""INSERT INTO games (title, unique_identifier,
+                                            release_date, rating,
                                             summary, studio_id, frequent_id) 
-                                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"""
-                self.cur.execute(sql_to_execute_games, (row_df['Title'], unique_identifier, row_df['Metascore'],
-                                                        row_df['User score'], row_df['Release Year'], row_df['Summary'],
+                                            VALUES (%s, %s, %s, %s, %s, %s, %s);"""
+                self.cur.execute(sql_to_execute_games, (row_df['Title'], unique_identifier, row_df['Release Year'],
+                                                        row_df['Rating'], row_df['Summary'],
                                                         studio_id, frequent_id))
 
                 self.cur.execute(f"""SELECT id FROM games WHERE unique_identifier="{unique_identifier}";""")
@@ -604,15 +615,15 @@ def main():
     # db1.populate_tables_tv_shows(df_tv_shows)
     # df_game = cl.game('year', '1996')
     # df_game = df_game.replace(np.nan, "missing", regex=True)
-    # df_movies = pd.read_csv('tester_movies2.csv')
+    df_movies = pd.read_csv('tester_movies2.csv')
     df_tv_shows = pd.read_csv('tester_tv_shows2.csv')
-    # df_games = pd.read_csv('tester_games2.csv')
+    df_games = pd.read_csv('tester_games2.csv')
     db1 = Database()
     assert db1.db_name == 'metacritic'
     db1.connect_to_db()
     db1.create_db()
     db1.create_tables_db()
-    db1.add_to_database_by_type(df_tv_shows, 'tv')
+    db1.add_to_database_by_type(df_games, 'games')
     print(db1.db_name)
 
 
