@@ -4,7 +4,7 @@
 ### Welcome to the metacritic web scraper
 
 This program scrapers data about Movies, Tv Shows and Games from the website
-[www.metacritic.com](https://www.metacritic.com/)
+[www.metacritic.com](https://www.metacritic.com/).
 The Data that is being scraped from Metacritc varies a little per type, If its a movie/Tv Show/Game but it mostly scrapes the name of the item, the metascores, release date, and more.
 Furthermore Each item now also gets its Wikipedia page from the wikipediaapi.
 ### Features
