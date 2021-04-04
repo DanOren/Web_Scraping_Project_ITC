@@ -313,11 +313,12 @@ class Scraper:
             try:
                 item_info = {}
                 soup = BeautifulSoup(res.content, 'lxml')
-                critic_meta_score_expression = re.compile('metascore_w larger')  # expression to find the meta score
-                for critic_ttl_score in soup.find_all('span', class_=critic_meta_score_expression, limit=1):
-                    item_info['Metascore'] = critic_ttl_score.text
+                critic_meta_score_expression = re.compile('metascore_w xlarge')  # expression to find the meta score
+                for critic_score in soup.find_all('div', class_=critic_meta_score_expression, limit=1):
+                    for critic_ttl_score in critic_score.find_all('span', limit=1):
+                        item_info['Metascore'] = critic_ttl_score.text
                 user_score_expression = re.compile('metascore_w user')  # expression to find the user score
-                for user_ttl_score in soup.find_all('span', class_=user_score_expression, limit=1):
+                for user_ttl_score in soup.find_all('div', class_=user_score_expression, limit=1):
                     item_info['User score'] = user_ttl_score.text
                 for title in soup.find_all('h1'):
                     item_info['Title'] = title.text
