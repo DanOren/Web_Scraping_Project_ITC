@@ -369,9 +369,11 @@ class Scraper:
                 name = row_df['Title'].split(': Season')[0]
                 # print(name)
             else:
-                name = row_df['Title'].replace(' ', '_')
+                name = row_df['Title']       # .replace(' ', '_')
+            print(name)
             page_py = wiki_wiki.page(name)
-            if page_py.exists():
+
+            if not name.startswith("#") and page_py.exists():
                 self.container.loc[index, 'wiki_url'] = page_py.fullurl
             else:
                 self.container.loc[index, 'wiki_url'] = f'No URL Found'
