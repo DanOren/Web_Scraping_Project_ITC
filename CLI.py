@@ -84,7 +84,7 @@ def check_input():
         raise IOError('Not enough input parameters!')
     if len(unknown) > 0:
         raise IOError('Not enough input parameters!')
-    if args.type_to_scrape not in ['movies', 'tv_shows', 'games']:
+    if args.type_to_scrape not in ['movies', 'tv_shows', 'games', 'tv']:
         raise IOError(f'Unknown command {args.type_to_scrape}')
     if args.how_to_scrape not in ['year', 'genre']:
         raise IOError(f'Unknown scrape parameter {args.how_to_scrape}')
