@@ -249,7 +249,8 @@ class Scraper:
                 logging.error(f'Unable to send batch to scrape.')
                 continue
             logging.debug(f'Scraping a batch of item urls.')
-        self.add_wiki_url_page()
+        # self.add_wiki_url_page()
+        self.media_wiki()
 
     def parallel_tv_show_scraper(self):
         """
@@ -297,7 +298,8 @@ class Scraper:
                 logging.error(f'Unable send batch to scrape.')
                 continue
             logging.debug(f'Scraping a batch of urls.')
-        self.add_wiki_url_page()
+        # self.add_wiki_url_page()
+        self.media_wiki()
 
     def parallel_game_scraper(self):
         """
@@ -359,9 +361,14 @@ class Scraper:
                 logging.error(f'unable send batch to scrape')
                 continue
             logging.debug(f'scraping a batch of urls')
-        self.add_wiki_url_page()
+        # self.add_wiki_url_page()
+        self.media_wiki()
 
     def add_wiki_url_page(self):
+        """
+        not in use but i don't want to delete this for the future..
+        :return:
+        """
         wiki_wiki = wikipediaapi.Wikipedia('en')
 
         for index, row_df in self.container.iterrows():
@@ -378,31 +385,57 @@ class Scraper:
             else:
                 self.container.loc[index, 'wiki_url'] = f'No URL Found'
 
+    def media_wiki(self):
+        """
+        This method uses mediawiki api by requesting a site and receiving the url of the item back.
+        :return:
+        """
+        for index, row_df in self.container.iterrows():
+            if self.get_type() == 'tv':
+                name = row_df['Title'].split(': Season')[0]
+                # print(name)
+            else:
+                name = row_df['Title']  # .replace(' ', '_')
+            request_session = requests.Session()
+            media_wiki_url = "https://en.wikipedia.org/w/api.php"
+            params = {
+                "action": "query",
+                "format": "json",
+                "titles": f"{name}",
+                "prop": "info",
+                "inprop": "url"
+            }
+            media_wiki_returned = request_session.get(url=media_wiki_url, params=params)
+            json_data = media_wiki_returned.json()
+            pages = json_data["query"]["pages"]
+            for key, item in pages.items():
+                self.container.loc[index, 'wiki_url'] = item['fullurl']
+
 
 def main():
     the_scraper_game = Scraper(cfg.EXAMPLE_WEB_PAGE_GAMES_2)
-    # the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
-    # the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE_2)
+    the_scraper_tv = Scraper(cfg.EXAMPLE_WEB_PAGE_TV_SHOWS)
+    the_scraper_movie = Scraper(cfg.EXAMPLE_WEB_PAGE_MOVIE)
     # the_scraper_movie.debug_concurrent_page_scraping()
 
     part_4_seconds_before = time.time()
     part_1_seconds_before = time.time()
-    # the_scraper_tv.parallel_tv_show_scraper()
+    the_scraper_tv.parallel_tv_show_scraper()
     part_1_seconds_after = time.time()
     part_2_seconds_before = time.time()
     the_scraper_game.parallel_game_scraper()
     part_2_seconds_after = time.time()
     part_3_seconds_before = time.time()
-    # the_scraper_movie.parallel_movie_scraper()
+    the_scraper_movie.parallel_movie_scraper()
     part_3_seconds_after = time.time()
     part_4_seconds_after = time.time()
     print(f"part tv time :{part_1_seconds_after - part_1_seconds_before}")
     print(f"part game time :{part_2_seconds_after - part_2_seconds_before}")
     print(f"part movie time :{part_3_seconds_after - part_3_seconds_before}")
     print(f"part total time :{part_4_seconds_after - part_4_seconds_before}")
-    # print(the_scraper_movie.get_container())
+    print(the_scraper_movie.get_container())
     print(the_scraper_game.get_container())
-    # print(the_scraper_tv.get_container())
+    print(the_scraper_tv.get_container())
 
 
 if __name__ == '__main__':

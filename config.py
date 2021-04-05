@@ -1,13 +1,13 @@
 MAIN_WEB_PAGE = 'https://www.metacritic.com'
 # Anchor page and subset of items used
 EXAMPLE_WEB_PAGE_MOVIE = 'https://www.metacritic.com/browse/movies/score/metascore/year' \
-                   '/filtered?year_selected=2017&sort=desc&view=detailed'
+                   '/filtered?year_selected=1927&sort=desc&view=detailed'
 EXAMPLE_WEB_PAGE_GAMES = 'https://www.metacritic.com/browse/games/score/metascore/year' \
                          '/all/filtered?year_selected=2020&distribution=&sort=desc&view=detailed'
 EXAMPLE_WEB_PAGE_TV_SHOWS = 'https://www.metacritic.com/browse/tv/score/metascore/year' \
                             '/filtered?year_selected=2015&sort=desc&view=detailed'
 EXAMPLE_WEB_PAGE_GAMES_2 = 'https://www.metacritic.com/browse/games/score/metascore/year/all/filtered?' \
-                           'year_selected=2001&distribution=&sort=desc&view=detailed'
+                           'year_selected=1996&distribution=&sort=desc&view=detailed'
 EXAMPLE_WEB_PAGE_MOVIE_2 = 'https://www.metacritic.com/browse/movies/score/metascore/year' \
                    '/filtered?year_selected=1965&sort=desc&view=detailed'
 FILM_NAME_WITHOUT_YEAR = 0
