@@ -240,7 +240,8 @@ class Scraper:
                 for runtime in soup.find_all('div', class_='runtime', limit=1):
                     item_info['Runtime'] = list(runtime.children)[3].text
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
-                    item_info['Summary'] = list(list(summary.children)[3].children)[1].text
+                    item_info['Summary'] = 'missing_value'
+                    # item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 item_series = pd.Series(item_info)
                 item_series.name = unique_identifier
@@ -289,7 +290,8 @@ class Scraper:
                         genre_list.append(genre.text.strip())
                 item_info['Genres'] = genre_list
                 for summary in soup.find_all('div', class_='summary_deck details_section', limit=1):
-                    item_info['Summary'] = list(list(summary.children)[3].children)[1].text
+                    item_info['Summary'] = 'missing_value'
+                    # item_info['Summary'] = list(list(summary.children)[3].children)[1].text
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 item_series = pd.Series(item_info)
                 item_series.name = unique_identifier
@@ -349,10 +351,11 @@ class Scraper:
                 for rating in soup.find_all('li', class_='summary_detail product_rating'):
                     item_info['Rating'] = rating.find('span', class_='data').text
                 for summary in soup.find_all('li', class_='summary_detail product_summary'):
-                    if summary.find('span', class_='blurb blurb_expanded') is None:  # for game with a short summary
-                        item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
-                    else:
-                        item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
+                    item_info['Summary'] = 'missing_value'
+                    # if summary.find('span', class_='blurb blurb_expanded') is None:  # for game with a short summary
+                    #     item_info['Summary'] = summary.find('span', class_='data').text.strip('\n')
+                    # else:
+                    #     item_info['Summary'] = summary.find('span', class_='blurb blurb_expanded').text
                 unique_identifier = '_'.join([item_info['Title'], item_info['Release Year']])
                 item_series = pd.Series(item_info)
                 item_series.name = unique_identifier
