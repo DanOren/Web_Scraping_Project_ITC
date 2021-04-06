@@ -409,7 +409,10 @@ class Scraper:
             json_data = media_wiki_returned.json()
             pages = json_data["query"]["pages"]
             for key, item in pages.items():
-                self.container.loc[index, 'wiki_url'] = item['fullurl']
+                if item['fullurl']:
+                    self.container.loc[index, 'wiki_url'] = item['fullurl']
+                else:
+                    self.container.loc[index, 'wiki_url'] = 'No URL Found'
 
 
 def main():
